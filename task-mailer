@@ -1,0 +1,114 @@
+#!/usr/bin/python
+# encoding=utf-8
+
+import json
+import os
+import smtplib
+import subprocess
+import sys
+
+from email.mime.text import MIMEText
+
+
+HTML_TEMPLATE = """<html><body><table>%s</table></body></html>"""
+
+
+def parse_args(argv):
+    args = {
+        "recipients": [],
+        "columns": ["id", "description"],
+        "subject": "Your tasks",
+        "filter": [],
+        "debug-html": False,
+        "debug-mime": False,
+        "debug-tasks": False,
+    }
+
+    for idx, arg in enumerate(argv[1:]):
+        if arg.startswith("--to="):
+            args["recipients"] = arg[5:].split(",")
+        elif arg.startswith("--subject="):
+            args["subject"] = arg[10:]
+        elif arg.startswith("--columns="):
+            args["columns"] = arg[10:].split(",")
+        elif arg == "--debug-html":
+            args["debug-html"] = True
+        elif arg == "--debug-mime":
+            args["debug-mime"] = True
+        elif arg == "--debug-tasks":
+            args["debug-tasks"] = True
+        elif arg.startswith("--"):
+            print "Unknown option: %s" % arg
+            sys.exit(1)
+        else:
+            args["filter"] = argv[idx + 1:]
+            break
+
+    return args
+
+
+def get_tasks(filter):
+    command = ["task"] + filter + ["export"]
+    p = subprocess.Popen(command, stdout=subprocess.PIPE)
+    out, err = p.communicate()
+
+    if p.returncode != 0:
+        print >> sys.stderr, "Error: %s" % err
+        sys.exit(p.returncode)
+
+    raw_json = "[%s]" % out
+    return json.loads(raw_json)
+
+
+def format_html(args):
+    tasks = get_tasks(args["filter"])
+
+    if args["debug-tasks"]:
+        print json.dumps(tasks, indent=True)
+        sys.exit(0)
+
+    if not tasks:
+        return None
+
+    html = "<html><body><table border='1'><thead><tr>"
+    for column in args["columns"]:
+        html += "<th>%s</th>" % column
+    html += "</tr>\n</thead><tbody>\n"
+
+    for task in tasks:
+        if not task["id"]:
+            continue
+
+        html += "<tr>"
+        for column in args["columns"]:
+            html += "<td>%s</td>" % task.get(column, "")
+        html += "</tr>\n"
+
+    html += "</tbody></table></body></html>"
+
+    if args["debug-html"]:
+        print html.encode("utf-8")
+        sys.exit(0)
+
+    return html
+
+
+def send_mail(args, html):
+    msg = MIMEText(html.encode("utf-8"), "html", "utf-8")
+    msg["Subject"] = args["subject"]
+    msg["To"] = ",".join(args["recipients"])
+
+    if args["debug-mime"]:
+        print msg.as_string()
+        sys.exit(0)
+
+    s = smtplib.SMTP("localhost")
+    s.sendmail(None, args["recipients"], msg.as_string())
+
+
+args = parse_args(sys.argv)
+html = format_html(args)
+if html is None:
+    print >> sys.stderr, "No tasks."
+    sys.exit(0)
+send_mail(args, html)
