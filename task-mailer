@@ -18,6 +18,8 @@ def parse_args(argv):
         "recipients": [],
         "columns": ["id", "description"],
         "subject": "Your tasks",
+        "sender": None,
+        "smtp-server": "localhost",
         "filter": [],
         "debug-html": False,
         "debug-mime": False,
@@ -29,6 +31,8 @@ def parse_args(argv):
             args["recipients"] = arg[5:].split(",")
         elif arg.startswith("--subject="):
             args["subject"] = arg[10:]
+        elif arg.startswith("--from="):
+            args["sender"] = arg[7:]
         elif arg.startswith("--columns="):
             args["columns"] = arg[10:].split(",")
         elif arg == "--debug-html":
@@ -37,6 +41,8 @@ def parse_args(argv):
             args["debug-mime"] = True
         elif arg == "--debug-tasks":
             args["debug-tasks"] = True
+        elif arg.startswith("--smtp-server="):
+            args["smtp-server"] = arg[14:]
         elif arg.startswith("--"):
             print "Unknown option: %s" % arg
             sys.exit(1)
@@ -97,13 +103,15 @@ def send_mail(args, html):
     msg = MIMEText(html.encode("utf-8"), "html", "utf-8")
     msg["Subject"] = args["subject"]
     msg["To"] = ",".join(args["recipients"])
+    if args["sender"]:
+        msg["From"] = args["sender"]
 
     if args["debug-mime"]:
         print msg.as_string()
         sys.exit(0)
 
-    s = smtplib.SMTP("localhost")
-    s.sendmail(None, args["recipients"], msg.as_string())
+    s = smtplib.SMTP(args["smtp-server"])
+    s.sendmail(args["sender"], args["recipients"], msg.as_string())
 
 
 args = parse_args(sys.argv)
