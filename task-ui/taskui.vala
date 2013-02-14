@@ -28,7 +28,11 @@ public class TaskWindow : Window {
 		this.view.insert_column_with_attributes(-1, "Project", new CellRendererText(), "text", 1);
 		this.view.insert_column_with_attributes(-1, "Description", new CellRendererText(), "text", 2);
 
-		parent.add(this.view);
+		var scroll = new ScrolledWindow(null, null);
+		scroll.set_policy(PolicyType.AUTOMATIC, PolicyType.AUTOMATIC);
+		scroll.add(this.view);
+
+		parent.add(scroll);
 	}
 
 	private void fetch_tasks() {
