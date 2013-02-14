@@ -3,26 +3,45 @@ using Gtk;
 public class TaskWindow : Window {
 	public TreeView view;
 	public ListStore model;
+	public TreeModelFilter filter;
+	public Entry search;
 
 	public TaskWindow() {
 		this.title = "TaskWarrior";
-		this.border_width = 0;
+		this.border_width = 2;
 		this.window_position = WindowPosition.CENTER;
 		this.set_default_size(250, 100);
 		this.destroy.connect(Gtk.main_quit);
 
 		this.icon = new Gdk.Pixbuf.from_file("icon.png");
 
-		this.setup_treeview(this);
+		var vbox = new VBox(false, 4);
+		vbox.pack_start(this.setup_search_field(), false);
+		vbox.pack_start(this.setup_treeview());
+
+		this.add(vbox);
 
 		this.fetch_tasks();
 	}
 
-	private void setup_treeview(Window parent) {
-		this.model = new ListStore(4, typeof(string), typeof(string), typeof(string), typeof(string));
-		this.view = new TreeView();
+	private Widget setup_search_field() {
+		this.search = new Entry();
 
-		this.view.set_model(this.model);
+		this.search.changed.connect(() => {
+			this.filter.refilter();
+		});
+
+		return this.search;
+	}
+
+	private Widget setup_treeview() {
+		this.model = new ListStore(4, typeof(string), typeof(string), typeof(string), typeof(string));
+
+		this.filter = new TreeModelFilter(this.model, null);
+		this.filter.set_visible_func(this.filter_tree);
+
+		this.view = new TreeView();
+		this.view.set_model(this.filter);
 
 		this.view.insert_column_with_attributes(-1, "Id", new CellRendererText(), "text", 0);
 		this.view.insert_column_with_attributes(-1, "Project", new CellRendererText(), "text", 1);
@@ -32,7 +51,29 @@ public class TaskWindow : Window {
 		scroll.set_policy(PolicyType.AUTOMATIC, PolicyType.AUTOMATIC);
 		scroll.add(this.view);
 
-		parent.add(scroll);
+		return scroll;
+	}
+
+	private bool filter_tree(TreeModel model, TreeIter iter) {
+		string query = this.search.text;
+		if (query.length == 0)
+			return true;
+
+		string text;
+
+		model.get(iter, 1, out text, -1);
+		if (text == null)
+			return false;
+		else if (text.index_of(query) >= 0)
+			return true;
+
+		model.get(iter, 2, out text, -1);
+		if (text == null)
+			return false;
+		else if (text.index_of(query) >= 0)
+			return true;
+
+		return false;
 	}
 
 	private void fetch_tasks() {
