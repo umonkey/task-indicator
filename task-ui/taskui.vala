@@ -1,16 +1,19 @@
 using Gtk;
+using AppIndicator;
+
 
 public class TaskWindow : Window {
 	public TreeView view;
 	public ListStore model;
 	public TreeModelFilter filter;
 	public Entry search;
+	public Indicator indicator;
 
 	public TaskWindow() {
 		this.title = "TaskWarrior";
 		this.border_width = 2;
 		this.window_position = WindowPosition.CENTER;
-		this.set_default_size(250, 100);
+		this.set_default_size(600, 300);
 		this.destroy.connect(Gtk.main_quit);
 
 		this.icon = new Gdk.Pixbuf.from_file("icon.png");
@@ -21,7 +24,33 @@ public class TaskWindow : Window {
 
 		this.add(vbox);
 
+		this.setup_indicator();
 		this.fetch_tasks();
+	}
+
+	private void setup_indicator() {
+		this.indicator = new Indicator(this.title, "indicator-messages",
+			IndicatorCategory.APPLICATION_STATUS);
+		this.indicator.set_status(IndicatorStatus.ACTIVE);
+		this.indicator.set_attention_icon("indicator-messages-new");
+
+		var menu = new Gtk.Menu();
+
+		var item = new Gtk.MenuItem.with_label("Foo");
+		item.activate.connect(() => {
+				indicator.set_status(IndicatorStatus.ATTENTION);
+		});
+		item.show();
+		menu.append(item);
+
+		item = new Gtk.MenuItem.with_label("Bar");
+		item.show();
+		item.activate.connect(() => {
+				indicator.set_status(IndicatorStatus.ATTENTION);
+		});
+		menu.append(item);
+
+		this.indicator.set_menu(menu);
 	}
 
 	private Widget setup_search_field() {
