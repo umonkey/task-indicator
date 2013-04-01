@@ -16,7 +16,11 @@ public class TaskWindow : Window {
 		this.set_default_size(600, 300);
 		this.destroy.connect(Gtk.main_quit);
 
-		this.icon = new Gdk.Pixbuf.from_file("icon.png");
+		try {
+			this.icon = new Gdk.Pixbuf.from_file("icon.png");
+		} catch (GLib.Error e) {
+			stderr.printf("Unable to load application icon: %s.\n", e.message);
+		}
 
 		var vbox = new VBox(false, 4);
 		vbox.pack_start(this.setup_search_field(), false);
@@ -116,18 +120,22 @@ public class TaskWindow : Window {
 		string tasks_fixed = "[%s]".printf(tasks);
 
 		var parser = new Json.Parser();
-		parser.load_from_data(tasks_fixed);
+		try {
+			parser.load_from_data(tasks_fixed);
 
-		TreeIter iter;
+			TreeIter iter;
 
-		foreach (var _item in parser.get_root().get_array().get_elements()) {
-			var item = _item.get_object();
+			foreach (var _item in parser.get_root().get_array().get_elements()) {
+				var item = _item.get_object();
 
-			this.model.append(out iter);
-			this.model.set(iter,
-				0, "%s".printf(item.get_int_member("id").to_string()),
-				1, item.get_string_member("project"),
-				2, item.get_string_member("description"));
+				this.model.append(out iter);
+				this.model.set(iter,
+					0, "%s".printf(item.get_int_member("id").to_string()),
+					1, item.get_string_member("project"),
+					2, item.get_string_member("description"));
+			}
+		} catch (GLib.Error e) {
+			stderr.printf("Could not load JSON: %s.\n", e.message);
 		}
 	}
 
