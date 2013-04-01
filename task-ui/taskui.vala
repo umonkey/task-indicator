@@ -96,7 +96,7 @@ public class TaskWindow : Window {
 
 			this.model.append(out iter);
 			this.model.set(iter,
-				0, "%lld".printf(item.get_int_member("id")),
+				0, "%s".printf(item.get_int_member("id").to_string()),
 				1, item.get_string_member("project"),
 				2, item.get_string_member("description"));
 		}
@@ -104,12 +104,10 @@ public class TaskWindow : Window {
 
 	private bool get_program_output(string[] command, out string ls_stdout) {
 		try {
-			string[] spawn_env = Environ.get();
-
 			string ls_stderr;
 			int ls_status;
 
-			Process.spawn_sync("/", command, spawn_env, SpawnFlags.SEARCH_PATH,
+			Process.spawn_sync("/", command, null, SpawnFlags.SEARCH_PATH,
 				null, out ls_stdout, out ls_stderr, out ls_status);
 
 			// stdout.printf("output: %s\n", ls_stdout);
