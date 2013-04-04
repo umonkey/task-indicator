@@ -48,10 +48,10 @@ public class TaskWindow : Window {
 	}
 
 	private void setup_indicator() {
-		this.indicator = new Indicator(this.title, "indicator-messages",
+		this.indicator = new Indicator(this.title, "taskui",
 			IndicatorCategory.APPLICATION_STATUS);
 		this.indicator.set_status(IndicatorStatus.ACTIVE);
-		this.indicator.set_attention_icon("indicator-messages-new");
+		this.indicator.set_attention_icon("taskui-active");
 
 		var menu = new Gtk.Menu();
 
