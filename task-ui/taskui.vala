@@ -57,15 +57,23 @@ public class TaskWindow : Window {
 
 		var menu = new Gtk.Menu();
 
-		this.item_total = new Gtk.MenuItem.with_label("Too many tasks.");
-		this.item_total.sensitive = false;
-		this.item_total.show();
-		menu.append(item_total);
+		var item = new Gtk.MenuItem.with_label("Too many tasks.");
+		item.sensitive = false;
+		item.show();
+		menu.append(item);
+		this.item_total = item;
 
-		var item = new Gtk.MenuItem.with_label("Bar");
+		item = new Gtk.MenuItem.with_label("Bar");
 		item.show();
 		item.activate.connect(() => {
 				indicator.set_status(IndicatorStatus.ATTENTION);
+		});
+		menu.append(item);
+
+		item = new Gtk.MenuItem.with_label("Exit");
+		item.show();
+		item.activate.connect(() => {
+				this.destroy();
 		});
 		menu.append(item);
 
