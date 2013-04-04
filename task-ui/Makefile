@@ -8,3 +8,8 @@ clean:
 
 debian-depends:
 	sudo apt-get install valac libgtk2.0-dev libjson-glib-dev libappindicator-dev
+
+install: taskui.svg
+	sudo cp $< /usr/share/icons/hicolor/scalable/
+	sudo cp $< /usr/share/icons/hicolor/24x24/
+	sudo cp $< /usr/share/pixmaps/

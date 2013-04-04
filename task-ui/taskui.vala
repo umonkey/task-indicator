@@ -16,15 +16,7 @@ public class TaskWindow : Window {
 		this.window_position = WindowPosition.CENTER;
 		this.set_default_size(600, 300);
 		this.destroy.connect(Gtk.main_quit);
-
-		try {
-			this.app_icon = new Gdk.Pixbuf.from_file("icon.png");
-		} catch (GLib.Error e) {
-			stderr.printf("Unable to load application icon: %s.\n", e.message);
-		}
-
-		if (this.app_icon)
-			this.icon = this.app_icon;
+		this.setup_app_icon();
 
 		var vbox = new VBox(false, 4);
 		vbox.pack_start(this.setup_search_field(), false);
@@ -34,6 +26,25 @@ public class TaskWindow : Window {
 
 		this.setup_indicator();
 		this.fetch_tasks();
+	}
+
+	/**
+	 * Loads the application icon.
+	 *
+	 * The use of this property is unknown, perhaps some window managers
+	 * display it in the window corner.  The icon used in the Unity app bar and
+	 * in the alt-tab window switcher is read directly from the system folder
+	 * /usr/share/pixmaps/taskui.svg.
+	 */
+	private void setup_app_icon() {
+		try {
+			this.app_icon = new Gdk.Pixbuf.from_file("taskui.svg");
+		} catch (GLib.Error e) {
+			stderr.printf("Unable to load application icon: %s.\n", e.message);
+			return;
+		}
+
+		this.icon = this.app_icon;
 	}
 
 	private void setup_indicator() {
