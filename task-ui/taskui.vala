@@ -8,6 +8,7 @@ public class TaskWindow : Window {
 	public TreeModelFilter filter;
 	public Entry search;
 	public Indicator indicator;
+	public Gdk.Pixbuf app_icon;
 
 	public TaskWindow() {
 		this.title = "TaskWarrior";
@@ -17,10 +18,13 @@ public class TaskWindow : Window {
 		this.destroy.connect(Gtk.main_quit);
 
 		try {
-			this.icon = new Gdk.Pixbuf.from_file("icon.png");
+			this.app_icon = new Gdk.Pixbuf.from_file("icon.png");
 		} catch (GLib.Error e) {
 			stderr.printf("Unable to load application icon: %s.\n", e.message);
 		}
+
+		if (this.app_icon)
+			this.icon = this.app_icon;
 
 		var vbox = new VBox(false, 4);
 		vbox.pack_start(this.setup_search_field(), false);
