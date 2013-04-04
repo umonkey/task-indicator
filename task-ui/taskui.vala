@@ -7,8 +7,10 @@ public class TaskWindow : Window {
 	public ListStore model;
 	public TreeModelFilter filter;
 	public Entry search;
-	public Indicator indicator;
 	public Gdk.Pixbuf app_icon;
+
+	public Indicator indicator;
+	public Gtk.MenuItem item_total;
 
 	public TaskWindow() {
 		this.title = "TaskWarrior";
@@ -55,14 +57,12 @@ public class TaskWindow : Window {
 
 		var menu = new Gtk.Menu();
 
-		var item = new Gtk.MenuItem.with_label("Foo");
-		item.activate.connect(() => {
-				indicator.set_status(IndicatorStatus.ATTENTION);
-		});
-		item.show();
-		menu.append(item);
+		this.item_total = new Gtk.MenuItem.with_label("Too many tasks.");
+		this.item_total.sensitive = false;
+		this.item_total.show();
+		menu.append(item_total);
 
-		item = new Gtk.MenuItem.with_label("Bar");
+		var item = new Gtk.MenuItem.with_label("Bar");
 		item.show();
 		item.activate.connect(() => {
 				indicator.set_status(IndicatorStatus.ATTENTION);
@@ -140,6 +140,7 @@ public class TaskWindow : Window {
 
 			TreeIter iter;
 
+			int count = 0;
 			foreach (var _item in parser.get_root().get_array().get_elements()) {
 				var item = _item.get_object();
 
@@ -148,7 +149,12 @@ public class TaskWindow : Window {
 					0, "%s".printf(item.get_int_member("id").to_string()),
 					1, item.get_string_member("project"),
 					2, item.get_string_member("description"));
+
+				count++;
 			}
+
+			var msg = "%u pending tasks.".printf(count);
+			this.item_total.label = msg;
 		} catch (GLib.Error e) {
 			stderr.printf("Could not load JSON: %s.\n", e.message);
 		}
