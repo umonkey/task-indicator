@@ -10,6 +10,7 @@ public class TaskWindow : Window {
 	public Gdk.Pixbuf app_icon;
 
 	public Indicator indicator;
+	public Gtk.Menu ind_menu;
 	public Gtk.MenuItem item_total;
 
 	public TaskWindow() {
@@ -61,6 +62,7 @@ public class TaskWindow : Window {
 		this.indicator.set_attention_icon("taskui-active");
 
 		var menu = new Gtk.Menu();
+		this.ind_menu = menu;
 
 		var item = new Gtk.MenuItem.with_label("Too many tasks.");
 		item.sensitive = false;
@@ -158,7 +160,7 @@ public class TaskWindow : Window {
 
 			TreeIter iter;
 
-			int count = 0;
+			int count = 0, active_count = 0;
 			foreach (var _item in parser.get_root().get_array().get_elements()) {
 				var item = _item.get_object();
 
@@ -168,7 +170,22 @@ public class TaskWindow : Window {
 					1, item.get_string_member("project"),
 					2, item.get_string_member("description"));
 
+				if (item.has_member("start")) {
+					stdout.printf("%s\n", item.get_string_member("uuid"));
+
+					var menu_item = new Gtk.MenuItem.with_label(item.get_string_member("description"));
+					menu_item.show();
+					menu_item.activate.connect(() => {
+						stdout.printf("SHOW %s\n", item.get_string_member("uuid"));
+					});
+					this.ind_menu.insert(menu_item, 2 + active_count);
+					active_count++;
+				}
+
 				count++;
+
+				var menu_item = new Gtk.MenuItem();
+				this.ind_menu.insert(menu_item, 3 + active_count);
 			}
 
 			var msg = "%u pending tasks.".printf(count);
