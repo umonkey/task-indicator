@@ -68,6 +68,10 @@ public class TaskWindow : Window {
 		menu.append(item);
 		this.item_total = item;
 
+		item = new Gtk.MenuItem();
+		item.show();
+		menu.append(item);
+
 		item = new Gtk.MenuItem.with_label("Show");
 		item.show();
 		item.activate.connect(() => {
