@@ -17,8 +17,13 @@ public class TaskWindow : Window {
 		this.border_width = 2;
 		this.window_position = WindowPosition.CENTER;
 		this.set_default_size(600, 300);
-		this.destroy.connect(Gtk.main_quit);
 		this.setup_app_icon();
+
+		// this.destroy.connect(Gtk.main_quit);
+		this.delete_event.connect(() => {
+			this.hide();
+			return true;
+		});
 
 		var vbox = new VBox(false, 4);
 		vbox.pack_start(this.setup_search_field(), false);
@@ -63,17 +68,18 @@ public class TaskWindow : Window {
 		menu.append(item);
 		this.item_total = item;
 
-		item = new Gtk.MenuItem.with_label("Bar");
+		item = new Gtk.MenuItem.with_label("Show");
 		item.show();
 		item.activate.connect(() => {
-				indicator.set_status(IndicatorStatus.ATTENTION);
+				this.show();
+				// indicator.set_status(IndicatorStatus.ATTENTION);
 		});
 		menu.append(item);
 
 		item = new Gtk.MenuItem.with_label("Exit");
 		item.show();
 		item.activate.connect(() => {
-				this.destroy();
+				Gtk.main_quit();
 		});
 		menu.append(item);
 
