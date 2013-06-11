@@ -58,10 +58,17 @@ class Checker(object):
             "project:work", "or", "start.not:", "export"], stdout=subprocess.PIPE)
         data = json.loads(p.communicate()[0])
 
+        # Sort by project, then by description
+        data.sort(key=lambda t: (t["project"].split(".")[-1],
+            t["description"]))
+
         for task in data:
-            item = gtk.CheckMenuItem(task["description"])
+            title = u"%s: %s" % (task["project"].split(".")[-1], task["description"])
+            item = gtk.CheckMenuItem(title, use_underline=False)
             if task.get("start"):
                 item.set_active(True)
+            item.connect("activate", self.on_task_toggle)
+            item.set_data("task", task)
             item.show()
             self.menu.insert(item, len(self.task_items))
             self.task_items.append(item)
@@ -72,10 +79,22 @@ class Checker(object):
             self.menu.insert(item, len(self.task_items))
             self.task_items.append(item)
 
+    def on_task_toggle(self, widget):
+        task = widget.get_data("task")
+        if widget.get_active():
+            subprocess.Popen(["task", task["uuid"], "start"]).wait()
+            # Open URLs from the task description
+            for word in task["description"].split(" "):
+                if "://" in word:
+                    subprocess.Popen(["xdg-open", word])
+        else:
+            subprocess.Popen(["task", task["uuid"], "stop"]).wait()
+        self.update_status()
+
     def main(self):
         """Enters the main program loop"""
-        self.show_task()
-        gtk.timeout_add(FREQUENCY * 1000, self.show_task)
+        self.update_status()
+        gtk.timeout_add(FREQUENCY * 1000, self.update_status)
         gtk.main()
 
     def stop(self, widget):
@@ -88,7 +107,7 @@ class Checker(object):
         """Ends the applet"""
         sys.exit(0)
 
-    def show_task(self):
+    def update_status(self):
         p = subprocess.Popen(["task", "status:pending", "start.not:", "count"],
             stdout=subprocess.PIPE)
 
@@ -106,7 +125,7 @@ class Checker(object):
             if str(count).endswith("1") and count != 11:
                 msg = "%u active task" % count
             else:
-                msg = "%u active tasks"
+                msg = "%u active tasks" % count
 
             if count:
                 duration = self.format_duration(self.get_duration())
@@ -116,7 +135,7 @@ class Checker(object):
 
             self.indicator.set_label(msg)
 
-        gtk.timeout_add(FREQUENCY * 1000, self.show_task)
+        gtk.timeout_add(FREQUENCY * 1000, self.update_status)
 
     def get_running_tasks(self):
         p = subprocess.Popen(["task", "rc.json.array=1", "status:pending",
