@@ -13,6 +13,7 @@ import dateutil.parser
 import gtk
 import json
 import os
+import shlex
 import subprocess
 import sys
 import time
@@ -21,7 +22,68 @@ import time
 FREQUENCY = 5  # seconds
 
 
+def get_task_info(uuid):
+    p = subprocess.Popen(["task", uuid, "export"],
+        stdout=subprocess.PIPE)
+    out = p.communicate()[0]
+    return json.loads(out)
+
+
+class Dialog(gtk.Window):
+    def __init__(self):
+        super(Dialog, self).__init__()
+
+        self.task = None
+
+        self.set_size_request(250, 100)
+        self.set_position(gtk.WIN_POS_CENTER)
+        self.set_title("Task properties")
+
+        self.entry = gtk.Entry()
+        self.btn_start = gtk.Button("Start")
+        self.btn_start.connect("clicked", self.on_start)
+
+        self.btn_cancel = gtk.Button("Cancel")
+        self.btn_cancel.connect("clicked", self.on_cancel)
+
+        self.vbox = gtk.VBox(spacing=8)
+        self.vbox.pack_start(self.entry)
+
+        self.hbox = gtk.HBox(spacing=8)
+        self.hbox.pack_start(self.btn_start)
+        self.hbox.pack_start(self.btn_cancel)
+        self.vbox.pack_start(self.hbox)
+
+        self.add(self.vbox)
+
+    def on_cancel(self, widget):
+        self.hide()
+
+    def on_start(self, widget):
+        if self.task.get("start"):
+            action = "stop"
+        else:
+            action = "start"
+
+        p = subprocess.Popen(["task", self.task["uuid"], action])
+        p.wait()
+        self.hide()
+
+    def show_task(self, task):
+        self.task = get_task_info(task["uuid"])
+        self.entry.set_text(task["description"])
+        if self.task.get("start"):
+            self.btn_start.set_label("Stop")
+        else:
+            self.btn_start.set_label("Start")
+        self.show_all()
+
+
 class Checker(object):
+    """The indicator applet.  Displays the TaskWarrior icon and current
+    activity time, if any.  The pop-up menu can be used to start or stop
+    running tasks.
+    """
     appname = "task-indicator"
     icon = "taskui"
     icon_attn = "taskui-active"
@@ -37,6 +99,8 @@ class Checker(object):
         self.indicator.set_attention_icon(self.icon_attn)
         self.menu_setup()
         self.indicator.set_menu(self.menu)
+
+        self.dialog = Dialog()
 
     def menu_setup(self):
         self.menu = gtk.Menu()
@@ -54,16 +118,10 @@ class Checker(object):
         self.menu_add_tasks()
 
     def menu_add_tasks(self):
-        p = subprocess.Popen(["task", "rc.json.array=1", "status:pending",
-            "project:work", "or", "start.not:", "export"], stdout=subprocess.PIPE)
-        data = json.loads(p.communicate()[0])
+        data = self.get_all_tasks()
 
-        # Sort by project, then by description
-        data.sort(key=lambda t: (t["project"].split(".")[-1],
-            t["description"]))
-
-        for task in data:
-            title = u"%s: %s" % (task["project"].split(".")[-1], task["description"])
+        for task in sorted(data, key=self.task_sort):
+            title = u"%s:\t%s" % (task["project"].split(".")[-1], task["description"])
             item = gtk.CheckMenuItem(title, use_underline=False)
             if task.get("start"):
                 item.set_active(True)
@@ -79,8 +137,15 @@ class Checker(object):
             self.menu.insert(item, len(self.task_items))
             self.task_items.append(item)
 
+    def task_sort(self, task):
+        return task["project"], -float(task["urgency"]), task["description"]
+
     def on_task_toggle(self, widget):
         task = widget.get_data("task")
+
+        self.dialog.show_task(task)
+        return
+
         if widget.get_active():
             subprocess.Popen(["task", task["uuid"], "start"]).wait()
             # Open URLs from the task description
@@ -95,13 +160,13 @@ class Checker(object):
         """Enters the main program loop"""
         self.update_status()
         gtk.timeout_add(FREQUENCY * 1000, self.update_status)
-        gtk.main()
 
     def stop(self, widget):
         """Stops running tasks"""
         for task in self.get_running_tasks():
             subprocess.Popen(["task", task["uuid"], "stop"]).wait()
         self.stop_item.hide()
+        self.update_status()
 
     def quit(self, widget):
         """Ends the applet"""
@@ -138,10 +203,23 @@ class Checker(object):
         gtk.timeout_add(FREQUENCY * 1000, self.update_status)
 
     def get_running_tasks(self):
-        p = subprocess.Popen(["task", "rc.json.array=1", "status:pending",
-            "start.not:", "export"], stdout=subprocess.PIPE)
-        out = p.communicate()[0]
-        return json.loads(out)
+        return self.get_filtered_tasks(["status:pending", "start.not:"])
+
+    def get_all_tasks(self):
+        return self.get_filtered_tasks(self.get_task_filter())
+
+    def get_filtered_tasks(self, filter):
+        cmd = ["task", "rc.json.array=1"] + filter + ["export"]
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        stdout = p.communicate()[0]
+        return json.loads(stdout)
+
+    def get_task_filter(self):
+        config = os.path.expanduser("~/.taskui-filter")
+        if not os.path.exists(config):
+            return ["status:pending", "project:work"]
+        with open(config, "rb") as f:
+            return shlex.split(f.read().strip())
 
     def get_duration(self):
         data = self.get_running_tasks()
@@ -165,3 +243,4 @@ class Checker(object):
 
 if __name__ == "__main__":
     Checker().main()
+    gtk.main()
