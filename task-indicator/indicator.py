@@ -34,6 +34,7 @@ class Dialog(gtk.Window):
         super(Dialog, self).__init__()
 
         self.task = None
+        self.callback = None
 
         self.set_size_request(250, 100)
         self.set_position(gtk.WIN_POS_CENTER)
@@ -64,13 +65,23 @@ class Dialog(gtk.Window):
             action = "stop"
         else:
             action = "start"
+            self.open_web_pages()
 
-        p = subprocess.Popen(["task", self.task["uuid"], action])
-        p.wait()
+        subprocess.Popen(["task", self.task["uuid"], action]).wait()
         self.hide()
 
-    def show_task(self, task):
+        if self.callback:
+            self.callback()
+
+    def open_web_pages(self):
+        for word in self.task["description"].split(" "):
+            if "://" in word:
+                subprocess.Popen(["xdg-open", word])
+
+    def show_task(self, task, callback):
         self.task = get_task_info(task["uuid"])
+        self.callback = callback
+
         self.entry.set_text(task["description"])
         if self.task.get("start"):
             self.btn_start.set_label("Stop")
@@ -143,7 +154,7 @@ class Checker(object):
     def on_task_toggle(self, widget):
         task = widget.get_data("task")
 
-        self.dialog.show_task(task)
+        self.dialog.show_task(task, callback=self.update_status)
         return
 
         if widget.get_active():
