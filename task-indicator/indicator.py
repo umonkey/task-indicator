@@ -19,14 +19,59 @@ import sys
 import time
 
 
-FREQUENCY = 5  # seconds
+FREQUENCY = 1  # seconds
+
+
+def run_command(command):
+    print >> sys.stderr, "> %s" % " ".join(command)
+    p = subprocess.Popen(command, stdout=subprocess.PIPE)
+    return p.communicate()[0]
 
 
 def get_task_info(uuid):
-    p = subprocess.Popen(["task", uuid, "export"],
-        stdout=subprocess.PIPE)
-    out = p.communicate()[0]
+    out = run_command(["task", uuid, "export"])
     return json.loads(out)
+
+
+class TaskWarrior(object):
+    def __init__(self):
+        self.filename = self.get_filename()
+        self.mtime = None
+        self.tasks = None
+
+    def poll(self):
+        """Returns True if the file was updated since last check."""
+        mtime = os.stat(self.filename).st_mtime
+        if mtime != self.mtime:
+            print "Task database changed."
+            self.tasks = None
+            self.mtime = mtime
+            return True
+        return False
+
+    def get_filename(self):
+        for line in run_command(["task", "_show"]).split("\n"):
+            if line.startswith("data.location="):
+                folder = line.split("=", 1)[1].strip()
+                return os.path.join(folder, "pending.data")
+
+    def get_tasks(self):
+        if self.tasks is None:
+            print "Reloading tasks."
+            self.tasks = self.load_tasks()
+        return self.tasks
+
+    def load_tasks(self):
+        f = self.get_task_filter()
+        output = run_command(["task", "rc.json.array=1"] + f + ["export"])
+        return json.loads(output)
+
+    def get_task_filter(self):
+        config = os.path.expanduser("~/.taskui-filter")
+        if not os.path.exists(config):
+            return ["status:pending", "or", "start.not:"]
+        with open(config, "rb") as f:
+            return shlex.split(f.read().strip())
 
 
 class Dialog(gtk.Window):
@@ -67,7 +112,7 @@ class Dialog(gtk.Window):
             action = "start"
             self.open_web_pages()
 
-        subprocess.Popen(["task", self.task["uuid"], action]).wait()
+        run_command(["task", self.task["uuid"], action])
         self.hide()
 
         if self.callback:
@@ -76,7 +121,7 @@ class Dialog(gtk.Window):
     def open_web_pages(self):
         for word in self.task["description"].split(" "):
             if "://" in word:
-                subprocess.Popen(["xdg-open", word])
+                run_command(["xdg-open", word])
 
     def show_task(self, task, callback):
         self.task = get_task_info(task["uuid"])
@@ -101,6 +146,7 @@ class Checker(object):
 
     def __init__(self):
         self.task_items = []
+        self.tw = TaskWarrior()
 
         self.indicator = appindicator.Indicator(self.appname,
             self.icon, appindicator.CATEGORY_APPLICATION_STATUS,
@@ -108,6 +154,7 @@ class Checker(object):
 
         self.indicator.set_status(appindicator.STATUS_ACTIVE)
         self.indicator.set_attention_icon(self.icon_attn)
+
         self.menu_setup()
         self.indicator.set_menu(self.menu)
 
@@ -126,10 +173,15 @@ class Checker(object):
         self.quit_item.show()
         self.menu.append(self.quit_item)
 
-        self.menu_add_tasks()
-
     def menu_add_tasks(self):
-        data = self.get_all_tasks()
+        print "Updating menu contents."
+
+        for item in self.menu.get_children():
+            if item.get_data("is_dynamic"):
+                self.menu.remove(item)
+        self.task_items = []
+
+        data = self.tw.get_tasks()
 
         for task in sorted(data, key=self.task_sort):
             title = u"%s:\t%s" % (task["project"].split(".")[-1], task["description"])
@@ -138,12 +190,15 @@ class Checker(object):
                 item.set_active(True)
             item.connect("activate", self.on_task_toggle)
             item.set_data("task", task)
+            item.set_data("is_dynamic", True)
             item.show()
+
             self.menu.insert(item, len(self.task_items))
             self.task_items.append(item)
 
         if data:
             item = gtk.SeparatorMenuItem()
+            item.set_data("is_dynamic", True)
             item.show()
             self.menu.insert(item, len(self.task_items))
             self.task_items.append(item)
@@ -158,24 +213,23 @@ class Checker(object):
         return
 
         if widget.get_active():
-            subprocess.Popen(["task", task["uuid"], "start"]).wait()
+            run_command(["task", task["uuid"], "start"])
             # Open URLs from the task description
             for word in task["description"].split(" "):
                 if "://" in word:
-                    subprocess.Popen(["xdg-open", word])
+                    run_command(["xdg-open", word])
         else:
-            subprocess.Popen(["task", task["uuid"], "stop"]).wait()
+            run_command(["task", task["uuid"], "stop"])
         self.update_status()
 
     def main(self):
         """Enters the main program loop"""
-        self.update_status()
-        gtk.timeout_add(FREQUENCY * 1000, self.update_status)
+        self.on_timer()
 
     def stop(self, widget):
         """Stops running tasks"""
         for task in self.get_running_tasks():
-            subprocess.Popen(["task", task["uuid"], "stop"]).wait()
+            run_command(["task", task["uuid"], "stop"])
         self.stop_item.hide()
         self.update_status()
 
@@ -183,14 +237,21 @@ class Checker(object):
         """Ends the applet"""
         sys.exit(0)
 
+    def on_timer(self):
+        """Timer handler which updates the list of tasks and the status."""
+        gtk.timeout_add(FREQUENCY * 1000, self.on_timer)
+
+        if self.tw.poll():
+            self.menu_add_tasks()
+
+        self.update_status()  # display current duration, etc
+
     def update_status(self):
-        p = subprocess.Popen(["task", "status:pending", "start.not:", "count"],
-            stdout=subprocess.PIPE)
+        """Changes the indicator icon and text label according to running
+        tasks."""
+        tasks = [t for t in self.tw.get_tasks() if "start" in t]
 
-        out = p.communicate()[0].strip()
-        count = int(out.strip())
-
-        if not count:
+        if not tasks:
             self.indicator.set_label("Idle")
             self.indicator.set_status(appindicator.STATUS_ACTIVE)
             self.stop_item.hide()
@@ -198,48 +259,19 @@ class Checker(object):
             self.indicator.set_status(appindicator.STATUS_ATTENTION)
             self.stop_item.show()
 
-            if str(count).endswith("1") and count != 11:
-                msg = "%u active task" % count
-            else:
-                msg = "%u active tasks" % count
-
-            if count:
-                duration = self.format_duration(self.get_duration())
-                msg += ", %s" % duration
-            else:
-                msg = "Idle"
+            msg = "%u/%s" % (len(tasks),
+                self.format_duration(self.get_duration()))
 
             self.indicator.set_label(msg)
 
-        gtk.timeout_add(FREQUENCY * 1000, self.update_status)
-
-    def get_running_tasks(self):
-        return self.get_filtered_tasks(["status:pending", "start.not:"])
-
-    def get_all_tasks(self):
-        return self.get_filtered_tasks(self.get_task_filter())
-
-    def get_filtered_tasks(self, filter):
-        cmd = ["task", "rc.json.array=1"] + filter + ["export"]
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        stdout = p.communicate()[0]
-        return json.loads(stdout)
-
-    def get_task_filter(self):
-        config = os.path.expanduser("~/.taskui-filter")
-        if not os.path.exists(config):
-            return ["status:pending", "project:work"]
-        with open(config, "rb") as f:
-            return shlex.split(f.read().strip())
-
     def get_duration(self):
-        data = self.get_running_tasks()
         now = datetime.datetime.utcnow()
 
         duration = datetime.timedelta()
-        for task in data:
-            ts = datetime.datetime.strptime(task["start"], "%Y%m%dT%H%M%SZ")
-            duration += (now - ts)
+        for task in self.tw.get_tasks():
+            if "start" in task:
+                ts = datetime.datetime.strptime(task["start"], "%Y%m%dT%H%M%SZ")
+                duration += (now - ts)
 
         return int(duration.total_seconds())
 
