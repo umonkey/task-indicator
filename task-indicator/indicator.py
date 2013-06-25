@@ -184,8 +184,7 @@ class Checker(object):
         data = self.tw.get_tasks()
 
         for task in sorted(data, key=self.task_sort):
-            title = u"%s:\t%s" % (task["project"].split(".")[-1], task["description"])
-            item = gtk.CheckMenuItem(title, use_underline=False)
+            item = gtk.CheckMenuItem(self.format_menu_label(task), use_underline=False)
             if task.get("start"):
                 item.set_active(True)
             item.connect("activate", self.on_task_toggle)
@@ -203,8 +202,18 @@ class Checker(object):
             self.menu.insert(item, len(self.task_items))
             self.task_items.append(item)
 
+    def format_menu_label(self, task):
+        proj = task["project"].split(".")[-1]
+
+        desc = task["description"]
+        if desc.startswith("(bw)"):
+            desc = desc.split(" ", 2)[-1]
+
+        title = u"%s:\t%s" % (proj, desc)
+        return title
+
     def task_sort(self, task):
-        return task["project"], -float(task["urgency"]), task["description"]
+        return task["project"], self.format_menu_label(task)
 
     def on_task_toggle(self, widget):
         task = widget.get_data("task")
