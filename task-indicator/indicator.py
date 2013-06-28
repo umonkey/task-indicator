@@ -18,6 +18,8 @@ import subprocess
 import sys
 import time
 
+import properties
+
 
 FREQUENCY = 1  # seconds
 
@@ -74,67 +76,6 @@ class TaskWarrior(object):
             return shlex.split(f.read().strip())
 
 
-class Dialog(gtk.Window):
-    def __init__(self):
-        super(Dialog, self).__init__()
-
-        self.task = None
-        self.callback = None
-
-        self.set_size_request(250, 100)
-        self.set_position(gtk.WIN_POS_CENTER)
-        self.set_title("Task properties")
-
-        self.entry = gtk.Entry()
-        self.btn_start = gtk.Button("Start")
-        self.btn_start.connect("clicked", self.on_start)
-
-        self.btn_cancel = gtk.Button("Cancel")
-        self.btn_cancel.connect("clicked", self.on_cancel)
-
-        self.vbox = gtk.VBox(spacing=8)
-        self.vbox.pack_start(self.entry)
-
-        self.hbox = gtk.HBox(spacing=8)
-        self.hbox.pack_start(self.btn_start)
-        self.hbox.pack_start(self.btn_cancel)
-        self.vbox.pack_start(self.hbox)
-
-        self.add(self.vbox)
-
-    def on_cancel(self, widget):
-        self.hide()
-
-    def on_start(self, widget):
-        if self.task.get("start"):
-            action = "stop"
-        else:
-            action = "start"
-            self.open_web_pages()
-
-        run_command(["task", self.task["uuid"], action])
-        self.hide()
-
-        if self.callback:
-            self.callback()
-
-    def open_web_pages(self):
-        for word in self.task["description"].split(" "):
-            if "://" in word:
-                run_command(["xdg-open", word])
-
-    def show_task(self, task, callback):
-        self.task = get_task_info(task["uuid"])
-        self.callback = callback
-
-        self.entry.set_text(task["description"])
-        if self.task.get("start"):
-            self.btn_start.set_label("Stop")
-        else:
-            self.btn_start.set_label("Start")
-        self.show_all()
-
-
 class Checker(object):
     """The indicator applet.  Displays the TaskWarrior icon and current
     activity time, if any.  The pop-up menu can be used to start or stop
@@ -158,7 +99,24 @@ class Checker(object):
         self.menu_setup()
         self.indicator.set_menu(self.menu)
 
-        self.dialog = Dialog()
+        self.dialog = properties.Dialog(callback=self.on_task_info_closed)
+        self.dialog.on_task_start = self.on_start_task
+        self.dialog.on_task_stop = self.on_stop_task
+
+    def on_start_task(self, task):
+        run_command(["task", task["uuid"], "start"])
+        self.update_status()
+        self.open_task_webpage(task)
+
+    def on_stop_task(self, task):
+        run_command(["task", task["uuid"], "stop"])
+        self.update_status()
+
+    def open_task_webpage(self, task):
+        print task["description"]
+        for word in task["description"].split(" "):
+            if "://" in word:
+                run_command(["xdg-open", word])
 
     def menu_setup(self):
         self.menu = gtk.Menu()
@@ -216,19 +174,23 @@ class Checker(object):
         return task["project"], self.format_menu_label(task)
 
     def on_task_toggle(self, widget):
+        widget.set_active(not widget.get_active())
         task = widget.get_data("task")
+        self.dialog.show_task(task)
+        return True
 
-        self.dialog.show_task(task, callback=self.update_status)
-        return
+    def on_task_info_closed(self, updates):
+        """Updates the task when the task info window is closed.  Updates
+        is a dictionary with 'uuid' and modified fields."""
+        uuid = updates["uuid"]
+        del updates["uuid"]
 
-        if widget.get_active():
-            run_command(["task", task["uuid"], "start"])
-            # Open URLs from the task description
-            for word in task["description"].split(" "):
-                if "://" in word:
-                    run_command(["xdg-open", word])
-        else:
-            run_command(["task", task["uuid"], "stop"])
+        if updates:
+            command = ["task", uuid, "mod"]
+            for k, v in updates.items():
+                command.append("%s:%s" % (k, v))
+            run_command(command)
+
         self.update_status()
 
     def main(self):
