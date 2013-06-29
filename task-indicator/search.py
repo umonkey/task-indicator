@@ -47,6 +47,7 @@ class Dialog(gtk.Dialog):
 
     def setup_signals(self):
         self.connect("response", self._on_response)
+        self.connect("delete_event", self._on_delete)
 
     def filter_tasks(self, model, iter):
         # print "filter_tasks", model, iter
@@ -71,8 +72,13 @@ class Dialog(gtk.Dialog):
                 task["project"], task["description"]])
 
     def show_all(self):
-        super(gtk.Dialog, self).show_all()
+        super(Dialog, self).show_all()
         self.grab_focus()
+
+    def _on_delete(self, *args):
+        """Instead of destroying the window on close, just hide it."""
+        self.hide()
+        return True
 
     def _on_row_activated(self, view, row, column):
         model = view.get_model()
