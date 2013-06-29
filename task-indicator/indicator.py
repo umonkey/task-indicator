@@ -239,6 +239,10 @@ class Checker(object):
 
 
 def main():
+    # FIXME: find a better way to load icons
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
+    print os.getcwd()
+
     app = Checker()
     app.main()
     app.search_dialog.show_all()
