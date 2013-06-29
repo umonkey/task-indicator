@@ -18,6 +18,8 @@ class Dialog(gtk.Dialog):
         self.set_position(gtk.WIN_POS_CENTER)
         self.add_buttons(gtk.STOCK_CLOSE, gtk.RESPONSE_REJECT)
 
+        self.set_icon_from_file("taskui.svg")
+
     def setup_controls(self):
         self.query_ctl = gtk.Entry()
         self.query_ctl.connect("changed", self._on_query_changed)

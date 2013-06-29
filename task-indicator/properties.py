@@ -55,6 +55,8 @@ class Dialog(gtk.Window):
         self.set_position(gtk.WIN_POS_CENTER)
         self.set_default_size(600, 100)
 
+        self.set_icon_from_file("taskui.svg")
+
     def show_task(self, task):
         print "Showing task %s ..." % task["uuid"]
 
