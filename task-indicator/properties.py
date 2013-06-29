@@ -42,6 +42,10 @@ class Dialog(gtk.Window):
         add_control(self.project, "Project:")
 
         row += 1
+        self.priority = gtk.Entry()
+        add_control(self.priority, "Priority:")
+
+        row += 1
         self.tags = gtk.Entry()
         add_control(self.tags, "Tags:")
 
@@ -76,6 +80,7 @@ class Dialog(gtk.Window):
         self.uuid.set_text(task["uuid"])
         self.description.set_text(task["description"])
         self.project.set_text(task["project"])
+        self.priority.set_text(task["priority"])
         self.tags.set_text(", ".join(task.get("tags", [])))
 
         self.completed.set_active(task["status"] == "completed")
@@ -101,6 +106,10 @@ class Dialog(gtk.Window):
             tmp = self.project.get_text()
             if tmp != self.task["project"]:
                 update["project"] = tmp
+
+            tmp = self.priority.get_text()
+            if tmp != self.task.get("priority"):
+                update["priority"] = tmp
 
             tmp = "completed" if self.completed.get_active() else "pending"
             if tmp != self.task["status"]:
