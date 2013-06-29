@@ -195,6 +195,7 @@ class Checker(object):
         print "on_tasks_changed"
         self.menu_add_tasks()
         self.search_dialog.refresh(self.database.get_tasks())
+        self.dialog.refresh(self.database.get_tasks())
 
     def on_timer(self):
         """Timer handler which updates the list of tasks and the status."""

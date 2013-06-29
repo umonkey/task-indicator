@@ -2,6 +2,8 @@
 
 import gtk
 
+import util
+
 
 class Priority(gtk.ComboBox):
     """A combo-box with predefined contents, for editing task priority.
@@ -42,6 +44,39 @@ class Priority(gtk.ComboBox):
             return "M"
 
 
+class Project(gtk.ComboBox):
+    def __init__(self):
+        self.value = None
+
+        super(Project, self).__init__()
+        self.store = gtk.ListStore(str)
+        self.set_model(self.store)
+
+        cell = gtk.CellRendererText()
+        self.pack_start(cell, True)
+        self.add_attribute(cell, "text", 0)
+
+        self.refresh()
+
+    def refresh(self, projects=None):
+        self.store.clear()
+        if projects:
+            for project in sorted(projects):
+                self.store.append([project])
+
+    def set_text(self, value):
+        self.value = value
+
+        for name in self.store:
+            if value == name[0]:
+                self.set_active(name.path[0])
+                break
+
+    def get_text(self):
+        path = self.get_active()
+        return self.store[path][0]
+
+
 class Dialog(gtk.Window):
     def __init__(self, callback=None, debug=False):
         super(gtk.Window, self).__init__()
@@ -77,7 +112,7 @@ class Dialog(gtk.Window):
         add_control(self.description, "Description:")
 
         row += 1
-        self.project = gtk.Entry()
+        self.project = Project()
         add_control(self.project, "Project:")
 
         row += 1
@@ -132,6 +167,14 @@ class Dialog(gtk.Window):
         self.show_all()
         self.description.grab_focus()
 
+    def refresh(self, tasks):
+        """Builds the list of all used project names and feeds it to the
+        project editor combo box."""
+        projects = {}
+        for task in tasks:
+            projects[task["project"]] = True
+        self.project.refresh(projects.keys())
+
     def on_close(self, widget):
         self.hide()
 
@@ -139,19 +182,19 @@ class Dialog(gtk.Window):
             update = {"uuid": self.task["uuid"]}
 
             tmp = self.description.get_text()
-            if tmp != self.task["description"]:
+            if tmp is not None and tmp != self.task["description"]:
                 update["description"] = tmp
 
             tmp = self.project.get_text()
-            if tmp != self.task["project"]:
+            if tmp is not None and tmp != self.task["project"]:
                 update["project"] = tmp
 
             tmp = self.priority.get_text()
-            if tmp != self.task.get("priority"):
+            if tmp is not None and tmp != self.task.get("priority"):
                 update["priority"] = tmp
 
             tmp = "completed" if self.completed.get_active() else "pending"
-            if tmp != self.task["status"]:
+            if tmp is not None and tmp != self.task["status"]:
                 update["status"] = tmp
 
             self.callback(update)
