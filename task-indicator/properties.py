@@ -81,6 +81,7 @@ class Dialog(gtk.Window):
     def __init__(self, callback=None, debug=False):
         super(gtk.Window, self).__init__()
         self.connect("delete_event", self.on_delete_event)
+        self.connect("key-press-event", self._on_keypress)
 
         self.debug = debug
         self.task = None
@@ -205,6 +206,12 @@ class Dialog(gtk.Window):
     def on_delete_event(self, widget, event, data=None):
         self.on_close(widget)
         return True
+
+    def _on_keypress(self, widget, event):
+        if event.keyval == gtk.keysyms.Escape:
+            self.hide()
+        if event.keyval == gtk.keysyms.Return:
+            self.on_close(widget)
 
     def on_start_stop(self, widget):
         if "start" in self.task:

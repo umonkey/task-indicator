@@ -58,6 +58,7 @@ class Dialog(gtk.Dialog):
     def setup_signals(self):
         self.connect("response", self._on_response)
         self.connect("delete_event", self._on_delete)
+        self.connect("key-press-event", self._on_keypress)
 
     def filter_tasks(self, model, iter):
         # print "filter_tasks", model, iter
@@ -114,6 +115,10 @@ class Dialog(gtk.Dialog):
 
     def _on_response(self, event, response_id):
         self.hide()
+
+    def _on_keypress(self, widget, event):
+        if event.keyval == gtk.keysyms.Escape:
+            self.hide()
 
     def on_activate_task(self, uuid):
         print "Activate task %s" % uuid
