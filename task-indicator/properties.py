@@ -3,6 +3,45 @@
 import gtk
 
 
+class Priority(gtk.ComboBox):
+    """A combo-box with predefined contents, for editing task priority.
+    Emulates get_text/set_text methods which work with H, M and L value,
+    while the human-readable longer priority descriptions are displayed.
+    """
+    def __init__(self):
+        super(Priority, self).__init__()
+
+        self.store = gtk.ListStore(str, str)
+        self.store.append(["H", "high"])
+        self.store.append(["M", "medium (normal)"])
+        self.store.append(["L", "low"])
+
+        self.set_model(self.store)
+
+        cell = gtk.CellRendererText()
+        self.pack_start(cell, True)
+        self.add_attribute(cell, "text", 1)
+
+    def set_text(self, value):
+        """Sets the current priority.  Value can be H, M or L."""
+        if value == "H":
+            self.set_active(0)
+        elif value == "L":
+            self.set_active(2)
+        else:
+            self.set_active(1)
+
+    def get_text(self):
+        """Returns H, M or L, depending on the selected priority."""
+        active = self.get_active()
+        if active == 0:
+            return "H"
+        elif active == 2:
+            return "L"
+        else:
+            return "M"
+
+
 class Dialog(gtk.Window):
     def __init__(self, callback=None, debug=False):
         super(gtk.Window, self).__init__()
@@ -42,7 +81,7 @@ class Dialog(gtk.Window):
         add_control(self.project, "Project:")
 
         row += 1
-        self.priority = gtk.Entry()
+        self.priority = Priority()
         add_control(self.priority, "Priority:")
 
         row += 1
