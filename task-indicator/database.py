@@ -15,7 +15,7 @@ class Database(object):
     def __init__(self, callback=None):
         self.filename = self.get_filename()
         self.mtime = None
-        self.tasks = None
+        self._tasks = None
 
         self.callback = callback
 
@@ -27,7 +27,7 @@ class Database(object):
         mtime = os.stat(self.filename).st_mtime
         if mtime != self.mtime:
             print "Task database file modified."
-            self.tasks = None
+            self._tasks = None
             self.mtime = mtime
             return True
         return False
@@ -39,10 +39,10 @@ class Database(object):
                 return os.path.join(folder, "pending.data")
 
     def get_tasks(self):
-        if self.tasks is None:
+        if self._tasks is None:
             print "Reloading tasks."
-            self.tasks = self.load_tasks()
-        return self.tasks
+            self._tasks = self.load_tasks()
+        return self._tasks
 
     def load_tasks(self):
         f = self.get_task_filter()

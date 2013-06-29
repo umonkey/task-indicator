@@ -181,8 +181,9 @@ class Checker(object):
 
     def stop(self, widget):
         """Stops running tasks"""
-        for task in self.get_running_tasks():
-            run_command(["task", task["uuid"], "stop"])
+        for task in self.database.get_tasks():
+            if "start" in task:
+                run_command(["task", task["uuid"], "stop"])
         self.stop_item.hide()
         self.update_status()
 
