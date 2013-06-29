@@ -63,7 +63,7 @@ class Dialog(gtk.Window):
         self.task = task
         self.description.set_text(task["description"])
         self.project.set_text(task["project"])
-        self.tags.set_text(", ".join(task["tags"]))
+        self.tags.set_text(", ".join(task.get("tags", [])))
 
         self.completed.set_active(task["status"] == "completed")
 
