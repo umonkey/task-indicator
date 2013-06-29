@@ -151,7 +151,7 @@ class Checker(object):
 
         data = self.tw.get_tasks()
 
-        for task in sorted(data, key=self.task_sort):
+        for task in sorted(data, key=self.task_sort)[:10]:
             item = gtk.CheckMenuItem(self.format_menu_label(task), use_underline=False)
             if task.get("start"):
                 item.set_active(True)
@@ -181,7 +181,9 @@ class Checker(object):
         return title
 
     def task_sort(self, task):
-        return task["project"], self.format_menu_label(task)
+        """Returns the data to sort tasks by."""
+        # print task["urgency"], task["description"]
+        return -float(task["urgency"])
 
     def on_show_all_tasks(self, widget):
         self.search_dialog.show_all()
