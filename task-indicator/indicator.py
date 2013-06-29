@@ -137,7 +137,8 @@ class Checker(object):
     def task_sort(self, task):
         """Returns the data to sort tasks by."""
         # print task["urgency"], task["description"]
-        return -float(task["urgency"])
+        is_running = "start" in task
+        return -is_running, -float(task["urgency"])
 
     def on_show_all_tasks(self, widget):
         self.search_dialog.show_all()
