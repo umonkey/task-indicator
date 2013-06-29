@@ -88,6 +88,9 @@ class Dialog(gtk.Dialog):
                 "%.1f" % float(task["urgency"]),
                 task["priority"]])
 
+        title = "Search for tasks (%u)" % len(tasks)
+        self.set_title(title)
+
     def show_all(self):
         super(Dialog, self).show_all()
         self.grab_focus()
