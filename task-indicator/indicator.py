@@ -11,70 +11,22 @@ import appindicator
 import datetime
 import dateutil.parser
 import gtk
-import json
 import os
-import shlex
-import subprocess
 import sys
 import time
 
+import database
 import properties
 import search
+from util import run_command
 
 
 FREQUENCY = 1  # seconds
 
 
-def run_command(command):
-    print >> sys.stderr, "> %s" % " ".join(command)
-    p = subprocess.Popen(command, stdout=subprocess.PIPE)
-    return p.communicate()[0]
-
-
 def get_task_info(uuid):
     out = run_command(["task", uuid, "export"])
     return json.loads(out)
-
-
-class TaskWarrior(object):
-    def __init__(self):
-        self.filename = self.get_filename()
-        self.mtime = None
-        self.tasks = None
-
-    def poll(self):
-        """Returns True if the file was updated since last check."""
-        mtime = os.stat(self.filename).st_mtime
-        if mtime != self.mtime:
-            print "Task database changed."
-            self.tasks = None
-            self.mtime = mtime
-            return True
-        return False
-
-    def get_filename(self):
-        for line in run_command(["task", "_show"]).split("\n"):
-            if line.startswith("data.location="):
-                folder = line.split("=", 1)[1].strip()
-                return os.path.join(folder, "pending.data")
-
-    def get_tasks(self):
-        if self.tasks is None:
-            print "Reloading tasks."
-            self.tasks = self.load_tasks()
-        return self.tasks
-
-    def load_tasks(self):
-        f = self.get_task_filter()
-        output = run_command(["task", "rc.json.array=1"] + f + ["export"])
-        return json.loads(output)
-
-    def get_task_filter(self):
-        config = os.path.expanduser("~/.taskui-filter")
-        if not os.path.exists(config):
-            return ["status:pending", "or", "start.not:"]
-        with open(config, "rb") as f:
-            return shlex.split(f.read().strip())
 
 
 class Checker(object):
@@ -90,7 +42,7 @@ class Checker(object):
         self.toggle_lock = False
 
         self.task_items = []
-        self.tw = TaskWarrior()
+        self.database = database.Database(callback=self.on_tasks_changed)
 
         self.indicator = appindicator.Indicator(self.appname,
             self.icon, appindicator.CATEGORY_APPLICATION_STATUS,
@@ -108,6 +60,8 @@ class Checker(object):
 
         self.search_dialog = search.Dialog()
         self.search_dialog.on_activate_task = self.on_search_callback
+
+        self.database.start_polling()
 
     def on_start_task(self, task):
         run_command(["task", task["uuid"], "start"])
@@ -149,7 +103,7 @@ class Checker(object):
                 self.menu.remove(item)
         self.task_items = []
 
-        data = self.tw.get_tasks()
+        data = self.database.get_tasks()
 
         for task in sorted(data, key=self.task_sort)[:10]:
             item = gtk.CheckMenuItem(self.format_menu_label(task), use_underline=False)
@@ -189,7 +143,7 @@ class Checker(object):
         self.search_dialog.show_all()
 
     def on_search_callback(self, uuid):
-        tasks = [t for t in self.tw.get_tasks() if t["uuid"] == uuid]
+        tasks = [t for t in self.database.get_tasks() if t["uuid"] == uuid]
         if not tasks:
             print "Oops, task %s does not exist." % uuid
         else:
@@ -236,20 +190,20 @@ class Checker(object):
         """Ends the applet"""
         sys.exit(0)
 
+    def on_tasks_changed(self, tasks):
+        print "on_tasks_changed"
+        self.menu_add_tasks()
+        self.search_dialog.refresh(self.database.get_tasks())
+
     def on_timer(self):
         """Timer handler which updates the list of tasks and the status."""
         gtk.timeout_add(FREQUENCY * 1000, self.on_timer)
-
-        if self.tw.poll():
-            self.menu_add_tasks()
-            self.search_dialog.refresh(self.tw.get_tasks())
-
         self.update_status()  # display current duration, etc
 
     def update_status(self):
         """Changes the indicator icon and text label according to running
         tasks."""
-        tasks = [t for t in self.tw.get_tasks() if "start" in t]
+        tasks = [t for t in self.database.get_tasks() if "start" in t]
 
         if not tasks:
             self.indicator.set_label("Idle")
@@ -268,7 +222,7 @@ class Checker(object):
         now = datetime.datetime.utcnow()
 
         duration = datetime.timedelta()
-        for task in self.tw.get_tasks():
+        for task in self.database.get_tasks():
             if "start" in task:
                 ts = datetime.datetime.strptime(task["start"], "%Y%m%dT%H%M%SZ")
                 duration += (now - ts)
