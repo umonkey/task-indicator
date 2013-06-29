@@ -238,6 +238,12 @@ class Checker(object):
         return "%u:%02u" % (hours, minutes)
 
 
-if __name__ == "__main__":
-    Checker().main()
+def main():
+    app = Checker()
+    app.main()
+    app.search_dialog.show_all()
     gtk.main()
+
+
+if __name__ == "__main__":
+    main()
