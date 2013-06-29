@@ -19,6 +19,7 @@ import sys
 import time
 
 import properties
+import search
 
 
 FREQUENCY = 1  # seconds
@@ -86,6 +87,8 @@ class Checker(object):
     icon_attn = "taskui-active"
 
     def __init__(self):
+        self.toggle_lock = False
+
         self.task_items = []
         self.tw = TaskWarrior()
 
@@ -103,6 +106,9 @@ class Checker(object):
         self.dialog.on_task_start = self.on_start_task
         self.dialog.on_task_stop = self.on_stop_task
 
+        self.search_dialog = search.Dialog()
+        self.search_dialog.on_activate_task = self.on_search_callback
+
     def on_start_task(self, task):
         run_command(["task", task["uuid"], "start"])
         self.update_status()
@@ -113,13 +119,17 @@ class Checker(object):
         self.update_status()
 
     def open_task_webpage(self, task):
-        print task["description"]
         for word in task["description"].split(" "):
             if "://" in word:
                 run_command(["xdg-open", word])
 
     def menu_setup(self):
         self.menu = gtk.Menu()
+
+        self.show_all_item = gtk.MenuItem("Show more...")
+        self.show_all_item.connect("activate", self.on_show_all_tasks)
+        self.show_all_item.show()
+        self.menu.append(self.show_all_item)
 
         self.stop_item = gtk.MenuItem("Stop all")
         self.stop_item.connect("activate", self.stop)
@@ -173,10 +183,26 @@ class Checker(object):
     def task_sort(self, task):
         return task["project"], self.format_menu_label(task)
 
+    def on_show_all_tasks(self, widget):
+        self.search_dialog.show_all()
+
+    def on_search_callback(self, uuid):
+        tasks = [t for t in self.tw.get_tasks() if t["uuid"] == uuid]
+        if not tasks:
+            print "Oops, task %s does not exist." % uuid
+        else:
+            self.dialog.show_task(tasks[0])
+
     def on_task_toggle(self, widget):
+        if self.toggle_lock:
+            return
+
+        self.toggle_lock = True
         widget.set_active(not widget.get_active())
+
         task = widget.get_data("task")
         self.dialog.show_task(task)
+        self.toggle_lock = False
         return True
 
     def on_task_info_closed(self, updates):
@@ -214,6 +240,7 @@ class Checker(object):
 
         if self.tw.poll():
             self.menu_add_tasks()
+            self.search_dialog.refresh(self.tw.get_tasks())
 
         self.update_status()  # display current duration, etc
 

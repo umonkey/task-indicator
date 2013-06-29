@@ -53,8 +53,11 @@ class Dialog(gtk.Window):
 
         self.set_title("Task properties")
         self.set_position(gtk.WIN_POS_CENTER)
+        self.set_default_size(600, 100)
 
     def show_task(self, task):
+        print "Showing task %s ..." % task["uuid"]
+
         self.task = task
         self.description.set_text(task["description"])
         self.project.set_text(task["project"])
