@@ -54,12 +54,12 @@ class Dialog(gtk.Dialog):
         if self.query is None:
             return True
 
-        project = unicode(model.get_value(iter, 2), "utf-8")
-        if self.query in project.lower():
+        project = model.get_value(iter, 2)
+        if project and self.query in unicode(project, "utf-8").lower():
             return True
 
-        description = unicode(model.get_value(iter, 3), "utf-8")
-        if self.query in description.lower():
+        description = model.get_value(iter, 3)
+        if description and self.query in unicode(description, "utf-8").lower():
             return True
 
         return False
