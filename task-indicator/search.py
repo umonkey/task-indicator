@@ -25,7 +25,7 @@ class Dialog(gtk.Dialog):
         self.query_ctl.connect("changed", self._on_query_changed)
         self.vbox.pack_start(self.query_ctl, expand=False, fill=True, padding=4)
 
-        self.model = model = gtk.ListStore(str, str, str, str)
+        self.model = model = gtk.ListStore(str, str, str, str, str, str)
         self.model_filter = model_filter = model.filter_new()
         model_filter.set_visible_func(self.filter_tasks)
 
@@ -34,6 +34,16 @@ class Dialog(gtk.Dialog):
         view.connect("row_activated", self._on_row_activated)
 
         col = gtk.TreeViewColumn("Project", gtk.CellRendererText(), text=2)
+        view.append_column(col)
+
+        cell = gtk.CellRendererText()
+        cell.set_property("xalign", 1.0)
+        col = gtk.TreeViewColumn("Urg.", cell, text=4)
+        view.append_column(col)
+
+        cell = gtk.CellRendererText()
+        cell.set_property("xalign", 0.5)
+        col = gtk.TreeViewColumn("Pri", cell, text=5)
         view.append_column(col)
 
         col = gtk.TreeViewColumn("Description", gtk.CellRendererText(), text=3)
@@ -67,9 +77,11 @@ class Dialog(gtk.Dialog):
     def refresh(self, tasks):
         """Updates the task list with the new tasks."""
         self.model.clear()
-        for task in tasks:
+        for task in sorted(tasks, key=lambda t: -float(t["urgency"])):
             self.model.append([task["uuid"], task["id"],
-                task["project"], task["description"]])
+                task["project"], task["description"],
+                "%.1f" % float(task["urgency"]),
+                task["priority"]])
 
     def show_all(self):
         super(Dialog, self).show_all()
