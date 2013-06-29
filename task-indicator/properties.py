@@ -14,33 +14,45 @@ class Dialog(gtk.Window):
 
         self.set_border_width(10)
 
-        self.grid = gtk.Table(5, 2)
+        self.grid = gtk.Table(6, 2)
         self.add(self.grid)
 
+        def add_label(text):
+            l = gtk.Label(text)
+            l.set_alignment(0, 0.5)
+            self.grid.attach(l, 0, 1, row, row+1,
+                xoptions=gtk.FILL, yoptions=gtk.FILL, xpadding=2, ypadding=2)
+
+        def add_control(ctl, label):
+            self.grid.attach(ctl, 1, 2, row, row+1,
+                yoptions=gtk.FILL, xpadding=2, ypadding=2)
+            add_label(label)
+
+        row = 0
+        self.uuid = gtk.Entry()
+        self.uuid.set_property("editable", False)
+        add_control(self.uuid, "UUID:")
+
+        row += 1
         self.description = gtk.Entry()
-        self.grid.attach(self.description, 1, 2, 0, 1,
-            yoptions=gtk.FILL, xpadding=2, ypadding=2)
-        self.grid.attach(gtk.Label("Description:"), 0, 1, 0, 1,
-            xoptions=gtk.FILL, yoptions=gtk.FILL, xpadding=2, ypadding=2)
+        add_control(self.description, "Description:")
 
+        row += 1
         self.project = gtk.Entry()
-        self.grid.attach(self.project, 1, 2, 1, 2,
-            yoptions=gtk.FILL, xpadding=2, ypadding=2)
-        self.grid.attach(gtk.Label("Project:"), 0, 1, 1, 2,
-            xoptions=gtk.FILL, yoptions=gtk.FILL, xpadding=2, ypadding=2)
+        add_control(self.project, "Project:")
 
+        row += 1
         self.tags = gtk.Entry()
-        self.grid.attach(self.tags, 1, 2, 2, 3,
-            yoptions=gtk.FILL, xpadding=2, ypadding=2)
-        self.grid.attach(gtk.Label("Tags:"), 0, 1, 2, 3,
-            xoptions=gtk.FILL, yoptions=gtk.FILL, xpadding=2, ypadding=2)
+        add_control(self.tags, "Tags:")
 
+        row += 1
         self.completed = gtk.CheckButton("completed")
-        self.grid.attach(self.completed, 1, 2, 3, 4,
+        self.grid.attach(self.completed, 1, 2, row, row+1,
             yoptions=gtk.FILL, xpadding=2, ypadding=2)
 
+        row += 1
         self.bbx = gtk.HButtonBox()
-        self.grid.attach(self.bbx, 0, 2, 4, 5,
+        self.grid.attach(self.bbx, 0, 2, row, row+1,
             yoptions=gtk.FILL, xpadding=2, ypadding=2)
 
         self.start = gtk.Button("Start")
@@ -61,6 +73,7 @@ class Dialog(gtk.Window):
         print "Showing task %s ..." % task["uuid"]
 
         self.task = task
+        self.uuid.set_text(task["uuid"])
         self.description.set_text(task["description"])
         self.project.set_text(task["project"])
         self.tags.set_text(", ".join(task.get("tags", [])))
