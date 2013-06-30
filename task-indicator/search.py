@@ -2,6 +2,8 @@
 
 import gtk
 
+from util import strip_description
+
 
 class Dialog(gtk.Dialog):
     def __init__(self, parent=None):
@@ -79,13 +81,8 @@ class Dialog(gtk.Dialog):
         """Updates the task list with the new tasks."""
         self.model.clear()
         for task in sorted(tasks, key=lambda t: -float(t["urgency"])):
-            description = task["description"]
-            if description.startswith("(bw)"):
-                words = description.split(" ")
-                description = " ".join(words[2:])
-
             self.model.append([task["uuid"], task["id"],
-                task["project"], description,
+                task["project"], strip_description(task["description"]),
                 "%.1f" % float(task["urgency"]),
                 task["priority"]])
 

@@ -18,7 +18,7 @@ import time
 import database
 import properties
 import search
-from util import run_command
+from util import run_command, strip_description
 
 
 FREQUENCY = 1  # seconds
@@ -126,12 +126,7 @@ class Checker(object):
 
     def format_menu_label(self, task):
         proj = task["project"].split(".")[-1]
-
-        desc = task["description"]
-        if desc.startswith("(bw)"):
-            desc = desc.split(" ", 2)[-1]
-
-        title = u"%s:\t%s" % (proj, desc)
+        title = u"%s:\t%s" % (proj, strip_description(task["description"]))
         return title
 
     def task_sort(self, task):
@@ -171,7 +166,14 @@ class Checker(object):
         if updates:
             command = ["task", uuid, "mod"]
             for k, v in updates.items():
-                command.append("%s:%s" % (k, v))
+                if k == "tags":
+                    for tag in v:
+                        if tag.strip():
+                            command.append(tag)
+                elif k == "description":
+                    command.append(v)
+                else:
+                    command.append("%s:%s" % (k, v))
             run_command(command)
 
         self.update_status()

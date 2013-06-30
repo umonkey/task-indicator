@@ -1,6 +1,7 @@
 # encoding=utf-8
 
 import gtk
+import re
 
 import util
 
@@ -77,6 +78,11 @@ class Project(gtk.ComboBox):
         return self.store[path][0]
 
 
+class Tags(gtk.Entry):
+    def get_tags(self):
+        return [t for t in re.split(",\s*", self.get_text()) if t.strip()]
+
+
 class Dialog(gtk.Window):
     def __init__(self, callback=None, debug=False):
         super(gtk.Window, self).__init__()
@@ -121,7 +127,7 @@ class Dialog(gtk.Window):
         add_control(self.priority, "Priority:")
 
         row += 1
-        self.tags = gtk.Entry()
+        self.tags = Tags()
         add_control(self.tags, "Tags:")
 
         row += 1
@@ -197,6 +203,16 @@ class Dialog(gtk.Window):
             tmp = "completed" if self.completed.get_active() else "pending"
             if tmp is not None and tmp != self.task["status"]:
                 update["status"] = tmp
+
+            tmp = self.tags.get_tags()
+            if tmp is not None and tmp != self.task.get("tags", []):
+                update["tags"] = []
+                for k in self.task["tags"]:
+                    if k not in tmp:
+                        update["tags"].append("-" + k)
+                for k in tmp:
+                    if k not in self.task["tags"]:
+                        update["tags"].append("+" + k)
 
             self.callback(update)
 
