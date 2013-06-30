@@ -2,6 +2,7 @@
 
 import gtk
 import re
+import webbrowser
 
 import util
 
@@ -144,6 +145,10 @@ class Dialog(gtk.Window):
         self.start.connect("clicked", self.on_start_stop)
         self.bbx.add(self.start)
 
+        self.browse = gtk.Button("Open links")
+        self.browse.connect("clicked", self._on_browse)
+        self.bbx.add(self.browse)
+
         self.close = gtk.Button("Close")
         self.close.connect("clicked", self.on_close)
         self.bbx.add(self.close)
@@ -181,6 +186,11 @@ class Dialog(gtk.Window):
         for task in tasks:
             projects[task["project"]] = True
         self.project.refresh(projects.keys())
+
+    def _on_browse(self, widget):
+        for word in self.task["description"].split(" "):
+            if "://" in word:
+                webbrowser.open(word)
 
     def on_close(self, widget):
         self.hide()
