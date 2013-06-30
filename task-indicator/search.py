@@ -91,6 +91,7 @@ class Dialog(gtk.Dialog):
 
     def show_all(self):
         super(Dialog, self).show_all()
+        self.present()
         self.grab_focus()
 
     def _on_delete(self, *args):
