@@ -1,6 +1,6 @@
 all: taskui
 
-taskui: taskui.vala
+taskui: taskui.vala Makefile
 	valac -o $@ --pkg gtk+-2.0 --pkg json-glib-1.0 --pkg appindicator-0.1 $<
 
 clean:
@@ -15,3 +15,6 @@ install-icons:
 	#sudo cp taskui.svg /usr/share/icons/hicolor/24x24/
 	sudo cp taskui.svg /usr/share/pixmaps/
 	sudo cp taskui-active.svg /usr/share/pixmaps/
+
+test: taskui
+	./taskui

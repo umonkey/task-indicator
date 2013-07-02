@@ -2,29 +2,48 @@ using Gtk;
 using AppIndicator;
 
 
+public class TaskInfo : Dialog {
+	public TaskInfo() {
+		this.setup_window();
+		this.setup_controls();
+		this.setup_signals();
+	}
+
+	private void setup_window() {
+		this.title = "Task information";
+		this.border_width = 2;
+		this.window_position = WindowPosition.CENTER;
+		this.set_default_size(300, 100);
+	}
+
+	private void setup_controls() {
+	}
+
+	private void setup_signals() {
+	}
+
+	public void show_task() {
+		this.show_all();
+	}
+}
+
+
 public class TaskWindow : Window {
 	public TreeView view;
 	public ListStore model;
 	public TreeModelFilter filter;
 	public Entry search;
 	public Gdk.Pixbuf app_icon;
+	public TaskInfo info_window;
 
 	public Indicator indicator;
 	public Gtk.Menu ind_menu;
 	public Gtk.MenuItem item_total;
 
 	public TaskWindow() {
-		this.title = "TaskWarrior";
-		this.border_width = 2;
-		this.window_position = WindowPosition.CENTER;
-		this.set_default_size(600, 300);
+		this.setup_this_window();
 		this.setup_app_icon();
-
-		// this.destroy.connect(Gtk.main_quit);
-		this.delete_event.connect(() => {
-			this.hide();
-			return true;
-		});
+		this.setup_info_window();
 
 		var vbox = new VBox(false, 4);
 		vbox.pack_start(this.setup_search_field(), false);
@@ -33,7 +52,36 @@ public class TaskWindow : Window {
 		this.add(vbox);
 
 		this.setup_indicator();
+		this.setup_signals();
+
 		this.fetch_tasks();
+	}
+
+	private void setup_this_window()
+	{
+		this.title = "Search pending tasks";
+		this.border_width = 2;
+		this.window_position = WindowPosition.CENTER;
+		this.set_default_size(600, 300);
+	}
+
+	private void setup_info_window()
+	{
+		this.info_window = new TaskInfo();
+	}
+
+	private void setup_signals()
+	{
+		// Hide window on close (instead of destroying).
+		this.delete_event.connect(() => {
+			this.hide();
+			return true;
+		});
+
+		// Double-clicking on a search result should open the task info window.
+		this.view.row_activated.connect(() => {
+			// this.info_window.show();
+		});
 	}
 
 	/**
@@ -218,6 +266,7 @@ public static int main (string[] args) {
 
 	var app = new TaskWindow();
 	app.show_all();
+
     Gtk.main();
 
     return 0;
