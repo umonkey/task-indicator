@@ -40,7 +40,7 @@ class Dialog(gtk.Dialog):
 
         cell = gtk.CellRendererText()
         cell.set_property("xalign", 1.0)
-        col = gtk.TreeViewColumn("Urg.", cell, text=4)
+        col = gtk.TreeViewColumn("Urg", cell, text=4)
         view.append_column(col)
 
         cell = gtk.CellRendererText()
