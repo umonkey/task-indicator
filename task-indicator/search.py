@@ -53,7 +53,8 @@ class Dialog(gtk.Dialog):
 
         scroll = gtk.ScrolledWindow()
         scroll.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_ALWAYS)
-        scroll.add_with_viewport(view)
+        # scroll.add_with_viewport(view)
+        scroll.add(view)
 
         self.vbox.add(scroll)
 
