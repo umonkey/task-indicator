@@ -36,19 +36,23 @@ class Dialog(gtk.Dialog):
         view.connect("row_activated", self._on_row_activated)
 
         col = gtk.TreeViewColumn("Project", gtk.CellRendererText(), text=2)
+        # col.set_sort_column_id(2)
         view.append_column(col)
 
         cell = gtk.CellRendererText()
         cell.set_property("xalign", 1.0)
         col = gtk.TreeViewColumn("Urg", cell, text=4)
+        # col.set_sort_column_id(4)
         view.append_column(col)
 
         cell = gtk.CellRendererText()
         cell.set_property("xalign", 0.5)
         col = gtk.TreeViewColumn("Pri", cell, text=5)
+        # col.set_sort_column_id(5)
         view.append_column(col)
 
         col = gtk.TreeViewColumn("Description", gtk.CellRendererText(), text=3)
+        # col.set_sort_column_id(3)
         view.append_column(col)
 
         scroll = gtk.ScrolledWindow()
