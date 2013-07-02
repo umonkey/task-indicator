@@ -31,7 +31,7 @@ class Dialog(gtk.Window):
         self.query_ctl.connect("changed", self._on_query_changed)
         self.vbox.pack_start(self.query_ctl, expand=False, fill=True, padding=4)
 
-        self.model = model = gtk.ListStore(str, str, str, str, str, str)
+        self.model = model = gtk.ListStore(str, int, str, str, str, str)
         self.model_filter = model_filter = model.filter_new()
         model_filter.set_visible_func(self.filter_tasks)
 
@@ -39,25 +39,25 @@ class Dialog(gtk.Window):
         view.set_model(model_filter)
         view.connect("row_activated", self._on_row_activated)
 
-        col = gtk.TreeViewColumn("Project", gtk.CellRendererText(), text=2)
-        # col.set_sort_column_id(2)
-        view.append_column(col)
+        lcell = gtk.CellRendererText()
+        lcell.set_property("xalign", 0.0)
 
-        cell = gtk.CellRendererText()
-        cell.set_property("xalign", 1.0)
-        col = gtk.TreeViewColumn("Urg", cell, text=4)
-        # col.set_sort_column_id(4)
-        view.append_column(col)
+        mcell = gtk.CellRendererText()
+        mcell.set_property("xalign", 0.5)
 
-        cell = gtk.CellRendererText()
-        cell.set_property("xalign", 0.5)
-        col = gtk.TreeViewColumn("Pri", cell, text=5)
-        # col.set_sort_column_id(5)
-        view.append_column(col)
+        rcell = gtk.CellRendererText()
+        rcell.set_property("xalign", 1.0)
 
-        col = gtk.TreeViewColumn("Description", gtk.CellRendererText(), text=3)
-        # col.set_sort_column_id(3)
-        view.append_column(col)
+        def add_column(text, cell, data_idx):
+            col = gtk.TreeViewColumn(text, cell, text=data_idx)
+            col.set_cell_data_func(cell, self.cell_data)
+            # col.set_sort_column_id(data_idx)
+            view.append_column(col)
+
+        add_column("Project", lcell, 2)
+        add_column("Urg", rcell, 4)
+        add_column("Pri", mcell, 5)
+        add_column("Description", lcell, 3)
 
         scroll = gtk.ScrolledWindow()
         scroll.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_ALWAYS)
@@ -99,6 +99,13 @@ class Dialog(gtk.Window):
             return True
 
         return False
+
+    def cell_data(self, col, cell, model, iter, data=None):
+        task_id = model[iter][1]
+        if task_id == 0:
+            cell.set_property("foreground", "gray")
+        else:
+            cell.set_property("foreground", "black")
 
     def refresh(self, tasks):
         """Updates the task list with the new tasks.  Also reloads the full
