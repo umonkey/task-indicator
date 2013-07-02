@@ -85,7 +85,7 @@ class Checker(object):
         self.show_all_item.show()
         self.menu.append(self.show_all_item)
 
-        self.stop_item = gtk.MenuItem("Stop all")
+        self.stop_item = gtk.MenuItem("Stop all running tasks")
         self.stop_item.connect("activate", self.stop)
         self.stop_item.show()
         self.menu.append(self.stop_item)
