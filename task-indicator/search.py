@@ -121,7 +121,7 @@ class Dialog(gtk.Window):
             tasks = self.tasks
 
         self.model.clear()
-        for task in sorted(tasks, key=lambda t: -float(t["urgency"])):
+        for task in sorted(tasks, key=self.task_sort_func):
             self.model.append([task["uuid"], task["id"],
                 task["project"], strip_description(task["description"]),
                 "%.1f" % float(task["urgency"]),
@@ -129,6 +129,10 @@ class Dialog(gtk.Window):
 
         title = "Search for tasks (%u)" % len(tasks)
         self.set_title(title)
+
+    def task_sort_func(self, task):
+        completed = task["id"] == 0
+        return (completed, -float(task["urgency"]))
 
     def show_all(self):
         super(Dialog, self).show_all()
