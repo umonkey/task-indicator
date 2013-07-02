@@ -11,6 +11,7 @@ import appindicator
 import datetime
 import dateutil.parser
 import gtk
+import json
 import os
 import sys
 import time
@@ -139,11 +140,7 @@ class Checker(object):
         self.search_dialog.show_all()
 
     def on_search_callback(self, uuid):
-        tasks = [t for t in self.database.get_tasks() if t["uuid"] == uuid]
-        if not tasks:
-            print "Oops, task %s does not exist." % uuid
-        else:
-            self.dialog.show_task(tasks[0])
+        self.dialog.show_task(get_task_info(uuid))
 
     def on_task_toggle(self, widget):
         if self.toggle_lock:

@@ -2,27 +2,31 @@
 
 import gtk
 
-from util import strip_description
+from util import strip_description, find_tasks
 
 
-class Dialog(gtk.Dialog):
+class Dialog(gtk.Window):
     def __init__(self, parent=None):
-        super(Dialog, self).__init__("Search for tasks", parent=parent)
+        super(Dialog, self).__init__()
         self.query = None
+        self.tasks = None
         self.setup_window()
         self.setup_controls()
         self.setup_signals()
 
     def setup_window(self):
         # self.set_title("Task search")
-        self.set_border_width(2)
+        self.set_border_width(4)
         self.set_default_size(600, 600)
         self.set_position(gtk.WIN_POS_CENTER)
-        self.add_buttons(gtk.STOCK_CLOSE, gtk.RESPONSE_REJECT)
+        # self.add_buttons(gtk.STOCK_CLOSE, gtk.RESPONSE_REJECT)
 
         self.set_icon_from_file("taskui.svg")
 
     def setup_controls(self):
+        self.vbox = gtk.VBox(homogeneous=False, spacing=4)
+        self.add(self.vbox)
+
         self.query_ctl = gtk.Entry()
         self.query_ctl.connect("changed", self._on_query_changed)
         self.vbox.pack_start(self.query_ctl, expand=False, fill=True, padding=4)
@@ -60,10 +64,24 @@ class Dialog(gtk.Dialog):
         # scroll.add_with_viewport(view)
         scroll.add(view)
 
-        self.vbox.add(scroll)
+        self.vbox.pack_start(scroll, expand=True, fill=True)
+
+        self.setup_bottom_controls()
+
+    def setup_bottom_controls(self):
+        """Fills in the bottom bar (checkboxes and buttons)."""
+        hbox = gtk.HBox(homogeneous=False, spacing=4)
+        self.vbox.pack_start(hbox, expand=False, fill=True)
+
+        self.show_all_button = gtk.CheckButton("Show all")
+        hbox.pack_start(self.show_all_button, expand=True, fill=True)
+
+        self.close_button = gtk.Button("Close")
+        hbox.pack_end(self.close_button, expand=False, fill=False)
 
     def setup_signals(self):
-        self.connect("response", self._on_response)
+        self.close_button.connect("clicked", self._on_close)
+        self.show_all_button.connect("clicked", self._on_show_all)
         self.connect("delete_event", self._on_delete)
         self.connect("key-press-event", self._on_keypress)
 
@@ -83,13 +101,24 @@ class Dialog(gtk.Dialog):
         return False
 
     def refresh(self, tasks):
-        """Updates the task list with the new tasks."""
+        """Updates the task list with the new tasks.  Also reloads the full
+        task list, to show when the corresponding checkbox is checked."""
+        self.tasks = tasks
+        self.all_tasks = find_tasks([])
+        self.refresh_table()
+
+    def refresh_table(self):
+        if self.show_all_button.get_active():
+            tasks = self.all_tasks
+        else:
+            tasks = self.tasks
+
         self.model.clear()
         for task in sorted(tasks, key=lambda t: -float(t["urgency"])):
             self.model.append([task["uuid"], task["id"],
                 task["project"], strip_description(task["description"]),
                 "%.1f" % float(task["urgency"]),
-                task["priority"]])
+                task.get("priority", "L")])
 
         title = "Search for tasks (%u)" % len(tasks)
         self.set_title(title)
@@ -116,8 +145,11 @@ class Dialog(gtk.Dialog):
         self.query = unicode(ctl.get_text(), "utf-8").lower()
         self.model_filter.refilter()
 
-    def _on_response(self, event, response_id):
+    def _on_close(self, widget):
         self.hide()
+
+    def _on_show_all(self, widget):
+        self.refresh_table()
 
     def _on_keypress(self, widget, event):
         if event.keyval == gtk.keysyms.Escape:

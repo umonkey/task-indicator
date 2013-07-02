@@ -1,11 +1,10 @@
 # encoding=utf-8
 
 import gtk
-import json
 import os
 import shlex
 
-from util import run_command
+from util import run_command, find_tasks
 
 
 FREQUENCY = 1
@@ -46,8 +45,7 @@ class Database(object):
 
     def load_tasks(self):
         f = self.get_task_filter()
-        output = run_command(["task", "rc.json.array=1"] + f + ["export"])
-        return json.loads(output)
+        return find_tasks(f)
 
     def get_task_filter(self):
         config = os.path.expanduser("~/.taskui-filter")
