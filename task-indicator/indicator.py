@@ -30,6 +30,13 @@ def get_task_info(uuid):
     return json.loads(out)
 
 
+def get_program_path(command):
+    for path in os.getenv("PATH").split(os.pathsep):
+        full = os.path.join(path, command)
+        if os.path.exists(full):
+            return full
+
+
 class Checker(object):
     """The indicator applet.  Displays the TaskWarrior icon and current
     activity time, if any.  The pop-up menu can be used to start or stop
@@ -91,10 +98,21 @@ class Checker(object):
         self.stop_item.show()
         self.menu.append(self.stop_item)
 
+        self.add_bugwarrior_menu_item(self.menu)
+
         self.quit_item = gtk.MenuItem("Quit")
         self.quit_item.connect("activate", self.quit)
         self.quit_item.show()
         self.menu.append(self.quit_item)
+
+    def add_bugwarrior_menu_item(self, menu):
+        if get_program_path("bugwarrior-pull") is None:
+            return
+
+        self.bw_item = gtk.MenuItem("Pull tasks from outside")
+        self.bw_item.connect("activate", self.on_pull_tasks)
+        self.bw_item.show()
+        menu.append(self.bw_item)
 
     def menu_add_tasks(self):
         print "Updating menu contents."
@@ -133,9 +151,12 @@ class Checker(object):
     def task_sort(self, task):
         """Returns the data to sort tasks by."""
         # print task["urgency"], task["description"]
-        is_pinned = "pin" in task.get("tags", [])
+        is_pinned = task.get("priority") == "H"  # "pin" in task.get("tags", [])
         is_running = "start" in task
         return -is_running, -is_pinned, -float(task["urgency"])
+
+    def on_pull_tasks(self, widget):
+        run_command(["bugwarrior-pull"])
 
     def on_show_all_tasks(self, widget):
         self.search_dialog.show_all()
