@@ -63,6 +63,8 @@ class Project(gtk.ComboBox):
     def refresh(self, projects=None):
         self.store.clear()
         if projects:
+            projects = list(projects)  # copy
+            projects.insert(0, "(none)")
             for project in sorted(projects):
                 self.store.append([project])
 
@@ -72,10 +74,14 @@ class Project(gtk.ComboBox):
         for name in self.store:
             if value == name[0]:
                 self.set_active(name.path[0])
-                break
+                return
+
+        self.set_active(0)
 
     def get_text(self):
         path = self.get_active()
+        if path == 0:
+            return None
         return self.store[path][0]
 
 
@@ -160,9 +166,19 @@ class Dialog(gtk.Window):
         self.set_icon_from_file("taskui.svg")
 
     def show_task(self, task):
+        self.task = task
+
+        if task.get("uuid"):
+            self.show_existing_task(task)
+        else:
+            self.show_new_task(task)
+
+        self.show_all()
+        self.description.grab_focus()
+
+    def show_existing_task(self, task):
         print "Showing task %s ..." % task["uuid"]
 
-        self.task = task
         self.uuid.set_text(task["uuid"])
         self.description.set_text(task["description"])
         self.project.set_text(task["project"])
@@ -176,8 +192,19 @@ class Dialog(gtk.Window):
         else:
             self.start.set_label("Start")
 
-        self.show_all()
+    def show_new_task(self, task):
+        print "Showing new task dialog..."
+
+        self.uuid.set_text("")
+        self.description.set_text("")
+        self.project.set_text("")
+        self.priority.set_text("M")
+        self.tags.set_text("")
+        self.completed.set_active(False)
+
         self.description.grab_focus()
+
+        self.start.set_label("Add")
 
     def refresh(self, tasks):
         """Builds the list of all used project names and feeds it to the
@@ -196,38 +223,47 @@ class Dialog(gtk.Window):
         self.hide()
 
         if self.callback:
-            update = {"uuid": self.task["uuid"]}
-
-            tmp = self.description.get_text()
-            if tmp is not None and tmp != self.task["description"]:
-                update["description"] = tmp
-
-            tmp = self.project.get_text()
-            if tmp is not None and tmp != self.task["project"]:
-                update["project"] = tmp
-
-            tmp = self.priority.get_text()
-            if tmp is not None and tmp != self.task.get("priority"):
-                update["priority"] = tmp
-
-            tmp = "completed" if self.completed.get_active() else "pending"
-            if tmp is not None and tmp != self.task["status"]:
-                update["status"] = tmp
-
-            tmp = self.tags.get_tags()
-            if tmp is not None and tmp != self.task.get("tags", []):
-                update["tags"] = []
-                for k in self.task["tags"]:
-                    if k not in tmp:
-                        update["tags"].append("-" + k)
-                for k in tmp:
-                    if k not in self.task["tags"]:
-                        update["tags"].append("+" + k)
-
-            self.callback(update)
+            updates = self.get_task_updates(self.task)
+            if updates and updates.get("uuid"):
+                self.callback(updates)
 
         if self.debug:
             gtk.main_quit()
+
+    def get_task_updates(self, task):
+        update = {}
+
+        if task.get("uuid"):
+            update["uuid"] = task["uuid"]
+
+        tmp = self.description.get_text()
+        if tmp is not None and tmp != self.task.get("description"):
+            update["description"] = tmp
+
+        tmp = self.project.get_text()
+        if tmp is not None and tmp != self.task.get("project"):
+            update["project"] = tmp
+
+        tmp = self.priority.get_text()
+        if tmp is not None and tmp != self.task.get("priority"):
+            update["priority"] = tmp
+
+        tmp = "completed" if self.completed.get_active() else "pending"
+        if tmp is not None and tmp != self.task.get("status"):
+            update["status"] = tmp
+
+        tmp = self.tags.get_tags()
+        old_tags = self.task.get("tags", [])
+        if tmp is not None and tmp != old_tags:
+            update["tags"] = []
+            for k in old_tags:
+                if k not in tmp:
+                    update["tags"].append("-" + k)
+            for k in tmp:
+                if k not in old_tags:
+                    update["tags"].append("+" + k)
+
+        return update
 
     def on_delete_event(self, widget, event, data=None):
         self.on_close(widget)
@@ -240,11 +276,21 @@ class Dialog(gtk.Window):
             self.on_close(widget)
 
     def on_start_stop(self, widget):
-        if "start" in self.task:
+        if not self.task.get("uuid"):
+            self.on_task_add(self.task)
+        elif "start" in self.task:
             self.on_task_stop(self.task)
         else:
             self.on_task_start(self.task)
         self.on_close(widget)
+
+    def on_task_add(self, task):
+        updates = self.get_task_updates(task)
+        if not updates:
+            print "new task not added: no changes."
+        else:
+            print "new task: %s" % updates
+            self.callback(updates)
 
     def on_task_start(self, task):
         print "task %s start" % self.task["uuid"]

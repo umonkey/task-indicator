@@ -88,31 +88,20 @@ class Checker(object):
     def menu_setup(self):
         self.menu = gtk.Menu()
 
-        self.show_all_item = gtk.MenuItem("Show more...")
-        self.show_all_item.connect("activate", self.on_show_all_tasks)
-        self.show_all_item.show()
-        self.menu.append(self.show_all_item)
+        def add_item(text, handler):
+            item = gtk.MenuItem(text)
+            item.connect("activate", handler)
+            item.show()
+            self.menu.append(item)
+            return item
 
-        self.stop_item = gtk.MenuItem("Stop all running tasks")
-        self.stop_item.connect("activate", self.stop)
-        self.stop_item.show()
-        self.menu.append(self.stop_item)
-
-        self.add_bugwarrior_menu_item(self.menu)
-
-        self.quit_item = gtk.MenuItem("Quit")
-        self.quit_item.connect("activate", self.quit)
-        self.quit_item.show()
-        self.menu.append(self.quit_item)
-
-    def add_bugwarrior_menu_item(self, menu):
-        if get_program_path("bugwarrior-pull") is None:
-            return
-
-        self.bw_item = gtk.MenuItem("Pull tasks from outside")
-        self.bw_item.connect("activate", self.on_pull_tasks)
-        self.bw_item.show()
-        menu.append(self.bw_item)
+        self.add_task_item = add_item("Add new task...", self.on_add_task)
+        self.show_all_item = add_item("Show more...", self.on_show_all_tasks)
+        self.stop_item = add_item("Stop all running tasks", self.stop)
+        if get_program_path("bugwarrior-pull"):
+            self.bw_item = add_item("Pull tasks from outside",
+                self.on_pull_tasks)
+        self.quit_item = add_item("Quit", self.quit)
 
     def menu_add_tasks(self):
         print "Updating menu contents."
@@ -155,6 +144,10 @@ class Checker(object):
         is_running = "start" in task
         return -is_running, -is_pinned, -float(task["urgency"])
 
+    def on_add_task(self, widget):
+        self.dialog.show_task({"uuid": None, "status": "pending",
+            "description": "", "priority": "M"})
+
     def on_pull_tasks(self, widget):
         run_command(["bugwarrior-pull"])
 
@@ -179,11 +172,18 @@ class Checker(object):
     def on_task_info_closed(self, updates):
         """Updates the task when the task info window is closed.  Updates
         is a dictionary with 'uuid' and modified fields."""
-        uuid = updates["uuid"]
-        del updates["uuid"]
+        if "uuid" in updates:
+            uuid = updates["uuid"]
+            del updates["uuid"]
+        else:
+            uuid = None
+
+        if uuid:
+            command = ["task", uuid, "mod"]
+        else:
+            command = ["task", "add"]
 
         if updates:
-            command = ["task", uuid, "mod"]
             for k, v in updates.items():
                 if k == "tags":
                     for tag in v:
