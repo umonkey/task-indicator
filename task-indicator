@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+# encoding=utf-8
+
+from __future__ import print_function
+
+import os
+import sys
+
+import pygtk
+pygtk.require("2.0")
+import gtk
+
+basedir = os.path.dirname(os.path.realpath(__file__))
+libdir = os.path.join(basedir, "src")
+datadir = os.path.join(basedir, "data")
+icondir = os.path.join(basedir, "icons")
+
+def fix_icons(basedir):
+    icondir = os.path.join(basedir, "icons")
+    if not os.path.exists(icondir):
+        return
+
+    # Make local icons available.
+    theme = gtk.icon_theme_get_default()
+    theme.prepend_search_path(icondir)
+
+    # Install local icons so that they'd be shown in alt-tab, see
+    # https://bugs.launchpad.net/ubuntu/+source/compiz/+bug/1104511
+    # FIXME as soon as the bug is closed.
+    # FIXME: only do this when running from a local repo.
+
+    """
+    local_icons = os.path.expanduser("~/.icons")
+    if os.path.exists(local_icons):
+        import glob, shutil
+        for src in glob.glob("icons/hicolor/scalable/apps/*.svg"):
+            shutil.copy(src, local_icons)
+    """
+
+    os.environ["TASK_INDICATOR_ICONDIR"] = icondir
+
+
+if os.path.isdir(libdir):
+    # Make local code available.
+    sys.path.insert(0, libdir)
+
+fix_icons(basedir)
+
+
+os.environ["TASK_INDICATOR_DATADIR"] = datadir
+
+try:
+    import taskindicator
+except ImportError:
+    print("task-indicator not properly installed.", file=sys.stderr)
+    sys.exit(1)
+
+taskindicator.launch()

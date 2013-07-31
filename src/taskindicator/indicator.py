@@ -3,6 +3,8 @@
 """TaskWarrior active task count and duration indicator applet.
 """
 
+from __future__ import print_function
+
 __author__ = "Justin Forest"
 __email__ = "hex@umonkey.net"
 
@@ -10,23 +12,26 @@ __email__ = "hex@umonkey.net"
 import appindicator
 import datetime
 import dateutil.parser
-import gtk
 import json
 import os
 import sys
 import time
 
-import database
-import properties
-import search
-from util import run_command, strip_description
+import pygtk
+pygtk.require("2.0")
+import gtk
+
+from taskindicator import database
+from taskindicator import properties
+from taskindicator import search
+from taskindicator import util
 
 
 FREQUENCY = 1  # seconds
 
 
 def get_task_info(uuid):
-    out = run_command(["task", uuid, "export"])
+    out = util.run_command(["task", uuid, "export"])
     return json.loads(out)
 
 
@@ -53,8 +58,13 @@ class Checker(object):
         self.database = database.Database(callback=self.on_tasks_changed)
 
         self.indicator = appindicator.Indicator(self.appname,
-            self.icon, appindicator.CATEGORY_APPLICATION_STATUS,
-            os.path.dirname(os.path.realpath(__file__)))
+            self.icon, appindicator.CATEGORY_APPLICATION_STATUS)
+
+        icondir = os.getenv("TASK_INDICATOR_ICONDIR")
+        if icondir:
+            self.indicator.set_icon_theme_path(icondir)
+            print("Appindicator theme path: %s, wanted: %s" % (self.indicator.get_icon_theme_path(), icondir))
+
 
         self.indicator.set_status(appindicator.STATUS_ACTIVE)
         self.indicator.set_attention_icon(self.icon_attn)
@@ -72,18 +82,18 @@ class Checker(object):
         self.database.start_polling()
 
     def on_start_task(self, task):
-        run_command(["task", task["uuid"], "start"])
+        util.run_command(["task", task["uuid"], "start"])
         self.update_status()
         self.open_task_webpage(task)
 
     def on_stop_task(self, task):
-        run_command(["task", task["uuid"], "stop"])
+        util.run_command(["task", task["uuid"], "stop"])
         self.update_status()
 
     def open_task_webpage(self, task):
         for word in task["description"].split(" "):
             if "://" in word:
-                run_command(["xdg-open", word])
+                util.run_command(["xdg-open", word])
 
     def menu_setup(self):
         self.menu = gtk.Menu()
@@ -104,7 +114,7 @@ class Checker(object):
         self.quit_item = add_item("Quit", self.quit)
 
     def menu_add_tasks(self):
-        print "Updating menu contents."
+        print("Updating menu contents.", file=sys.stderr)
 
         for item in self.menu.get_children():
             if item.get_data("is_dynamic"):
@@ -134,12 +144,12 @@ class Checker(object):
 
     def format_menu_label(self, task):
         proj = task["project"].split(".")[-1]
-        title = u"%s:\t%s" % (proj, strip_description(task["description"]))
+        title = u"%s:\t%s" % (proj, util.strip_description(task["description"]))
         return title
 
     def task_sort(self, task):
         """Returns the data to sort tasks by."""
-        # print task["urgency"], task["description"]
+        # print("%s %s" % (task["urgency"], task["description"]), file=sys.stderr)
         is_pinned = task.get("priority") == "H"  # "pin" in task.get("tags", [])
         is_running = "start" in task
         return -is_running, -is_pinned, -float(task["urgency"])
@@ -149,7 +159,7 @@ class Checker(object):
             "description": "", "priority": "M"})
 
     def on_pull_tasks(self, widget):
-        run_command(["bugwarrior-pull"])
+        util.run_command(["bugwarrior-pull"])
 
     def on_show_all_tasks(self, widget):
         self.search_dialog.show_all()
@@ -193,7 +203,7 @@ class Checker(object):
                     command.append(v)
                 else:
                     command.append("%s:%s" % (k, v))
-            run_command(command)
+            util.run_command(command)
 
         self.update_status()
 
@@ -205,7 +215,7 @@ class Checker(object):
         """Stops running tasks"""
         for task in self.database.get_tasks():
             if "start" in task:
-                run_command(["task", task["uuid"], "stop"])
+                util.run_command(["task", task["uuid"], "stop"])
         self.stop_item.hide()
         self.update_status()
 
@@ -214,7 +224,7 @@ class Checker(object):
         sys.exit(0)
 
     def on_tasks_changed(self, tasks):
-        print "on_tasks_changed"
+        print("on_tasks_changed", file=sys.stderr)
         self.menu_add_tasks()
         self.search_dialog.refresh(self.database.get_tasks())
         self.dialog.refresh(self.database.get_tasks())
@@ -263,15 +273,9 @@ class Checker(object):
 
 
 def main():
-    # FIXME: find a better way to load icons
-    os.chdir(os.path.dirname(os.path.realpath(__file__)))
-    print os.getcwd()
+    os.chdir("/")
 
     app = Checker()
     app.main()
     app.search_dialog.show_all()
     gtk.main()
-
-
-if __name__ == "__main__":
-    main()

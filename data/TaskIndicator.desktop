@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=TaskWarrior indicator
+Exec=task-indicator
+Icon=taskui
+Type=Application
+Categories=GTK;GNOME;Utility;

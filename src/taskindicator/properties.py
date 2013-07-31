@@ -1,10 +1,16 @@
 # encoding=utf-8
 
-import gtk
+from __future__ import print_function
+
 import re
+import sys
 import webbrowser
 
-import util
+import pygtk
+pygtk.require("2.0")
+import gtk
+
+from taskindicator import util
 
 
 class Priority(gtk.ComboBox):
@@ -163,7 +169,7 @@ class Dialog(gtk.Window):
         self.set_position(gtk.WIN_POS_CENTER)
         self.set_default_size(600, 100)
 
-        self.set_icon_from_file("taskui.svg")
+        self.set_icon_name("taskui")
 
     def show_task(self, task):
         self.task = task
@@ -177,7 +183,7 @@ class Dialog(gtk.Window):
         self.description.grab_focus()
 
     def show_existing_task(self, task):
-        print "Showing task %s ..." % task["uuid"]
+        print("Showing task %s ..." % task["uuid"], file=sys.stderr)
 
         self.uuid.set_text(task["uuid"])
         self.description.set_text(task["description"])
@@ -193,7 +199,7 @@ class Dialog(gtk.Window):
             self.start.set_label("Start")
 
     def show_new_task(self, task):
-        print "Showing new task dialog..."
+        print("Showing new task dialog...", file=sys.stderr)
 
         self.uuid.set_text("")
         self.description.set_text("")
@@ -287,22 +293,22 @@ class Dialog(gtk.Window):
     def on_task_add(self, task):
         updates = self.get_task_updates(task)
         if not updates:
-            print "new task not added: no changes."
+            print("new task not added: no changes.", file=sys.stderr)
         else:
-            print "new task: %s" % updates
+            print("new task: %s" % updates, file=sys.stderr)
             self.callback(updates)
 
     def on_task_start(self, task):
-        print "task %s start" % self.task["uuid"]
+        print("task %s start" % self.task["uuid"], file=sys.stderr)
 
     def on_task_stop(self, task):
-        print "task %s stop" % self.task["uuid"]
+        print("task %s stop" % self.task["uuid"], file=sys.stderr)
 
 
 def main():
     def take2(task):
         if len(task) > 1:
-            print "Task update:", task
+            print("Task update: %s" % task, file=sys.stderr)
 
     w = Dialog(callback=take2, debug=True)
     w.show_task({"uuid": "2ea544b9-a068-4e3e-a99d-5235ed53a17f",

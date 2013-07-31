@@ -1,8 +1,10 @@
 # encoding=utf-8
 
+from __future__ import print_function
+
 import gtk
 
-from util import strip_description, find_tasks
+from taskindicator import util
 
 
 class Dialog(gtk.Window):
@@ -21,7 +23,7 @@ class Dialog(gtk.Window):
         self.set_position(gtk.WIN_POS_CENTER)
         # self.add_buttons(gtk.STOCK_CLOSE, gtk.RESPONSE_REJECT)
 
-        self.set_icon_from_file("taskui.svg")
+        self.set_icon_name("taskui")
 
     def setup_controls(self):
         self.vbox = gtk.VBox(homogeneous=False, spacing=4)
@@ -86,7 +88,7 @@ class Dialog(gtk.Window):
         self.connect("key-press-event", self._on_keypress)
 
     def filter_tasks(self, model, iter):
-        # print "filter_tasks", model, iter
+        # print("filter_tasks %s %s" % (model, iter), file=sys.stderr)
         if self.query is None:
             return True
 
@@ -111,7 +113,7 @@ class Dialog(gtk.Window):
         """Updates the task list with the new tasks.  Also reloads the full
         task list, to show when the corresponding checkbox is checked."""
         self.tasks = tasks
-        self.all_tasks = find_tasks([])
+        self.all_tasks = util.find_tasks([])
         self.refresh_table()
 
     def refresh_table(self):
@@ -123,7 +125,7 @@ class Dialog(gtk.Window):
         self.model.clear()
         for task in sorted(tasks, key=self.task_sort_func):
             self.model.append([task["uuid"], task["id"],
-                task["project"], strip_description(task["description"]),
+                task["project"], util.strip_description(task["description"]),
                 "%.1f" % float(task["urgency"]),
                 task.get("priority", "L")])
 
@@ -167,4 +169,4 @@ class Dialog(gtk.Window):
             self.hide()
 
     def on_activate_task(self, uuid):
-        print "Activate task %s" % uuid
+        print("Activate task %s" % uuid, file=sys.stderr)

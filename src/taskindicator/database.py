@@ -1,10 +1,13 @@
 # encoding=utf-8
 
+from __future__ import print_function
+
 import gtk
 import os
 import shlex
+import sys
 
-from util import run_command, find_tasks
+from taskindicator import util
 
 
 FREQUENCY = 1
@@ -25,27 +28,27 @@ class Database(object):
         """Returns True if the file was updated since last check."""
         mtime = os.stat(self.filename).st_mtime
         if mtime != self.mtime:
-            print "Task database file modified."
+            print("Task database file modified.", file=sys.stderr)
             self._tasks = None
             self.mtime = mtime
             return True
         return False
 
     def get_filename(self):
-        for line in run_command(["task", "_show"]).split("\n"):
+        for line in util.run_command(["task", "_show"]).split("\n"):
             if line.startswith("data.location="):
                 folder = line.split("=", 1)[1].strip()
                 return os.path.join(folder, "pending.data")
 
     def get_tasks(self):
         if self._tasks is None:
-            print "Reloading tasks."
+            print("Reloading tasks.", file=sys.stderr)
             self._tasks = self.load_tasks()
         return self._tasks
 
     def load_tasks(self):
         f = self.get_task_filter()
-        return find_tasks(f)
+        return util.find_tasks(f)
 
     def get_task_filter(self):
         config = os.path.expanduser("~/.taskui-filter")
