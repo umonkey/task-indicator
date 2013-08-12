@@ -40,5 +40,5 @@ setup(
     requires = ['gtk', 'json', 'dateutil'],
     scripts = ['task-indicator'],
     url = 'http://umonkey.net/task-indicator/',
-    version = '1.0'
+    version = '1.1'
 )

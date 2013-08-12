@@ -152,7 +152,8 @@ class Checker(object):
         # print("%s %s" % (task["urgency"], task["description"]), file=sys.stderr)
         is_pinned = task.get("priority") == "H"  # "pin" in task.get("tags", [])
         is_running = "start" in task
-        return -is_running, -is_pinned, -float(task["urgency"])
+        is_endless = "endless" in task.get("tags", [])
+        return is_endless, -is_running, -is_pinned, -float(task["urgency"])
 
     def on_add_task(self, widget):
         self.dialog.show_task({"uuid": None, "status": "pending",
