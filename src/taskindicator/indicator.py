@@ -149,11 +149,11 @@ class Checker(object):
 
     def task_sort(self, task):
         """Returns the data to sort tasks by."""
-        # print("%s %s" % (task["urgency"], task["description"]), file=sys.stderr)
-        is_pinned = task.get("priority") == "H"  # "pin" in task.get("tags", [])
+        is_pinned = "pin" in task.get("tags", [])
         is_running = "start" in task
         is_endless = "endless" in task.get("tags", [])
-        return is_endless, -is_running, -is_pinned, -float(task["urgency"])
+        pri = {"H":3, "M": 2, "L": 1}.get(task.get("priority"), 0)
+        return -is_running, -is_pinned, is_endless, -pri, -float(task["urgency"])
 
     def on_add_task(self, widget):
         self.dialog.show_task({"uuid": None, "status": "pending",
