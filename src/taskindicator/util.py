@@ -2,6 +2,8 @@
 
 from __future__ import print_function
 
+import calendar
+import datetime
 import json
 import subprocess
 import sys
@@ -9,6 +11,8 @@ import sys
 import pygtk
 pygtk.require("2.0")
 import gtk
+
+from taskindicator import taskw
 
 
 def run_command(command):
@@ -18,8 +22,7 @@ def run_command(command):
 
 
 def find_tasks(args):
-    command = ["task", "rc.json.array=1"] + args + ["export"]
-    return json.loads(run_command(command))
+    return taskw.Tasks()
 
 
 def strip_description(text):
@@ -39,3 +42,22 @@ def get_icon_path(icon_name):
         return icon.get_filename()
 
     print("No icon named %s" % icon_name, file=sys.stderr)
+
+
+def get_task_info(uuid):
+    return taskw.Tasks()[uuid]
+
+
+class UTC(datetime.tzinfo):
+    def utcoffset(self, dt):
+        return datetime.timedelta(0)
+
+    def tzname(self, dt):
+        return "UTC"
+
+    def dst(self, dt):
+        return datetime.timedelta(0)
+
+
+def now():
+    return datetime.datetime.now(UTC())

@@ -1,9 +1,13 @@
 # encoding=utf-8
 
+"""The task properties dialog."""
+
+
 from __future__ import print_function
 
 import re
 import sys
+import time
 import webbrowser
 
 import pygtk
@@ -11,6 +15,11 @@ pygtk.require("2.0")
 import gtk
 
 from taskindicator import util
+
+
+__author__ = "Justin Forest"
+__email__ = "hex@umonkey.net"
+__license__ = "GPL"
 
 
 class Priority(gtk.ComboBox):
@@ -53,6 +62,10 @@ class Priority(gtk.ComboBox):
 
 
 class Project(gtk.ComboBox):
+    """Project selection combo box.
+    TODO: make it editable, to allow adding new projects.
+    """
+
     def __init__(self):
         self.value = None
 
@@ -171,6 +184,26 @@ class Dialog(gtk.Window):
 
         self.set_icon_name("taskui")
 
+        self.on_timer()
+
+    def on_timer(self):
+        """Updates the start/stop button periodically."""
+        gtk.timeout_add(1000, self.on_timer)
+
+        if self.get_property("visible"):
+            self.set_start_stop_label()
+
+    def set_start_stop_label(self):
+        """Updates the start/stop button label according to the current task
+        activity status.  If the task is running, then the label is "Stop" and
+        the running time is displayed."""
+        if self.task and "start" in self.task:
+            dur = self.task.format_current_runtime()
+            label = "Stop ({0})".format(dur)
+        else:
+            label = "Start"
+        self.start.set_label(label)
+
     def show_task(self, task):
         self.task = task
 
@@ -180,6 +213,7 @@ class Dialog(gtk.Window):
             self.show_new_task(task)
 
         self.show_all()
+        self.set_start_stop_label()
         self.description.grab_focus()
 
     def show_existing_task(self, task):

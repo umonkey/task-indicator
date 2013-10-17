@@ -1,3 +1,10 @@
+2013/10/17
+
+- Added a new module taskw.py, which is a simple database parser.
+- Current task duration is shown in the properties dialog.
+- Sorting by urgency temporarily doesn't work.
+
+
 Version 1.2
 
 - Tasks tagged with "pin" are always show at the top of the indicator menu.

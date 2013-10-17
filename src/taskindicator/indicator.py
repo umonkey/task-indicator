@@ -30,11 +30,6 @@ from taskindicator import util
 FREQUENCY = 1  # seconds
 
 
-def get_task_info(uuid):
-    out = util.run_command(["task", uuid, "export"])
-    return json.loads(out)
-
-
 def get_program_path(command):
     for path in os.getenv("PATH").split(os.pathsep):
         full = os.path.join(path, command)
@@ -153,7 +148,7 @@ class Checker(object):
         is_running = "start" in task
         is_endless = "endless" in task.get("tags", [])
         pri = {"H":3, "M": 2, "L": 1}.get(task.get("priority"), 0)
-        return -is_running, -is_pinned, is_endless, -pri, -float(task["urgency"])
+        return -is_running, -is_pinned, is_endless, -pri #, -float(task["urgency"])
 
     def on_add_task(self, widget):
         self.dialog.show_task({"uuid": None, "status": "pending",
@@ -166,7 +161,7 @@ class Checker(object):
         self.search_dialog.show_all()
 
     def on_search_callback(self, uuid):
-        self.dialog.show_task(get_task_info(uuid))
+        self.dialog.show_task(util.get_task_info(uuid))
 
     def on_task_toggle(self, widget):
         if self.toggle_lock:
@@ -254,15 +249,11 @@ class Checker(object):
             self.indicator.set_label(msg)
 
     def get_duration(self):
-        now = datetime.datetime.utcnow()
-
-        duration = datetime.timedelta()
+        duration = 0
         for task in self.database.get_tasks():
             if "start" in task:
-                ts = datetime.datetime.strptime(task["start"], "%Y%m%dT%H%M%SZ")
-                duration += (now - ts)
-
-        return int(duration.total_seconds())
+                duration += task.get_current_runtime()
+        return duration
 
     def format_duration(self, seconds):
         minutes = seconds / 60
