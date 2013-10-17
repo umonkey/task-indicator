@@ -148,7 +148,8 @@ class Checker(object):
         is_running = "start" in task
         is_endless = "endless" in task.get("tags", [])
         pri = {"H":3, "M": 2, "L": 1}.get(task.get("priority"), 0)
-        return -is_running, -is_pinned, is_endless, -pri #, -float(task["urgency"])
+        return (-is_running, -is_pinned, is_endless, -pri,
+            -float(task.get("urgency", 0)))
 
     def on_add_task(self, widget):
         self.dialog.show_task({"uuid": None, "status": "pending",

@@ -33,7 +33,7 @@ class Dialog(gtk.Window):
         self.query_ctl.connect("changed", self._on_query_changed)
         self.vbox.pack_start(self.query_ctl, expand=False, fill=True, padding=4)
 
-        self.model = model = gtk.ListStore(str, int, str, str, str, str)
+        self.model = model = gtk.ListStore(str, str, str, str, str, str)
         self.model_filter = model_filter = model.filter_new()
         model_filter.set_visible_func(self.filter_tasks)
 
@@ -103,11 +103,11 @@ class Dialog(gtk.Window):
         return False
 
     def cell_data(self, col, cell, model, iter, data=None):
-        task_id = model[iter][1]
-        if task_id == 0:
-            cell.set_property("foreground", "gray")
-        else:
+        status = model[iter][1]
+        if status == "pending":
             cell.set_property("foreground", "black")
+        else:
+            cell.set_property("foreground", "gray")
 
     def refresh(self, tasks):
         """Updates the task list with the new tasks.  Also reloads the full
@@ -125,11 +125,10 @@ class Dialog(gtk.Window):
         self.model.clear()
         for task in sorted(tasks, key=self.task_sort_func):
             row = [task["uuid"],
-                  task["id"] or 0,
+                  task["status"],
                   task["project"], util.strip_description(task["description"]),
                   "%.1f" % float(task["urgency"]),
                   task.get("priority", "L")]
-            print(row)
             self.model.append(row)
 
         title = "Search for tasks (%u)" % len(tasks)

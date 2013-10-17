@@ -31,8 +31,19 @@ class Task(dict):
 
     def __getitem__(self, key):
         if key == "urgency":
-            return "0"
+            return self.get_urgency()
         return super(Task, self).get(key, None)
+
+    def get_urgency(self):
+        # FIXME: implement the right algo.
+        value = 0.0
+
+        value += min((time.time() - int(self["entry"])) / 1000, 10)
+
+        pri = {"L": 0, "M": 10, "H": 20}
+        value += pri.get(self["priority"])
+
+        return value
 
     def get_current_runtime(self):
         if not self.get("start"):
@@ -79,6 +90,7 @@ class Tasks(object):
             task = Task(self.database)
             for kw in shlex.split(line[1:-1]):
                 k, v = kw.split(":", 1)
+                v = v.replace("\/", "/")  # FIXME: must be a better way
                 task[k] = v.decode("utf-8")
 
             tasks.append(task)
@@ -100,3 +112,6 @@ class Tasks(object):
 if __name__ == "__main__":
     for task in Tasks():
         print(task)
+        if "start" in task:
+            for k, v in sorted(task.items()):
+                print("  {0}: {1}".format(k, v.encode("utf-8")))
