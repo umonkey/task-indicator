@@ -107,7 +107,7 @@ class Tasks(object):
         return iter(self.tasks)
 
     def __getitem__(self, key):
-        for task in self.pending:
+        for task in self.tasks:
             if task["uuid"] == key:
                 return task
 
