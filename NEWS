@@ -1,6 +1,7 @@
 2013/10/18
 
 - Start/Stop button no longer closes the properties dialog.
+- The taskw module now also reads completed and deleted tasks.
 
 
 2013/10/17

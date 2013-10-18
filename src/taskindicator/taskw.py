@@ -64,21 +64,27 @@ class Task(dict):
 
 
 class Tasks(object):
-    def __init__(self, database=None):
-        if database is None:
-            database = os.path.expanduser("~/.task/pending.data")
-        self.database = database
+    def __init__(self, database_folder=None):
+        if database_folder is None:
+            database_folder = os.path.expanduser("~/.task")
+        self.database_folder = database_folder
 
-        self.pending = self.load_data()
+        self.tasks = []
 
-    def load_data(self):
+        db = os.path.join(database_folder, "pending.data")
+        self.tasks += self.load_data(db)
+
+        db = os.path.join(database_folder, "completed.data")
+        self.tasks += self.load_data(db)
+
+    def load_data(self, database):
         """Reads the database file, parses it and returns a list of Task object
         instances, which contain all parsed data (values are unicode)."""
-        if not os.path.exists(self.database):
-            logger.warning("Database {0} does not exist.".format(self.database))
+        if not os.path.exists(database):
+            logger.warning("Database {0} does not exist.".format(database))
             return {}
 
-        with open(self.database, "rb") as f:
+        with open(database, "rb") as f:
             raw_data = f.read()
 
         tasks = []
@@ -87,7 +93,7 @@ class Tasks(object):
                 raise ValueError("Unsupported file format " \
                     "in {0}".format(filename))
 
-            task = Task(self.database)
+            task = Task(database)
             for kw in shlex.split(line[1:-1]):
                 k, v = kw.split(":", 1)
                 v = v.replace("\/", "/")  # FIXME: must be a better way
@@ -98,7 +104,7 @@ class Tasks(object):
         return tasks
 
     def __iter__(self):
-        return iter(self.pending)
+        return iter(self.tasks)
 
     def __getitem__(self, key):
         for task in self.pending:
@@ -106,7 +112,7 @@ class Tasks(object):
                 return task
 
     def __len__(self):
-        return len(self.pending)
+        return len(self.tasks)
 
 
 if __name__ == "__main__":
