@@ -254,7 +254,7 @@ class Checker(object):
     def get_duration(self):
         duration = 0
         for task in self.database.get_tasks():
-            if "start" in task:
+            if task["status"] == "pending" and "start" in task:
                 duration += task.get_current_runtime()
         return duration
 
