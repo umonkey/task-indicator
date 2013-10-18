@@ -320,9 +320,11 @@ class Dialog(gtk.Window):
             self.on_task_add(self.task)
         elif "start" in self.task:
             self.on_task_stop(self.task)
+            del self.task["start"]
         else:
             self.on_task_start(self.task)
-        self.on_close(widget)
+            self.task["start"] = int(time.time())
+        # self.on_close(widget)
 
     def on_task_add(self, task):
         updates = self.get_task_updates(task)

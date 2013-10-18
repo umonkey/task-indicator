@@ -1,3 +1,8 @@
+2013/10/18
+
+- Start/Stop button no longer closes the properties dialog.
+
+
 2013/10/17
 
 - Added a new module taskw.py, which is a simple database parser.
