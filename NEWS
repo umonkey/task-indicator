@@ -2,6 +2,7 @@
 
 - Start/Stop button no longer closes the properties dialog.
 - The taskw module now also reads completed and deleted tasks.
+- Fixed completed tasks being shown by default.
 
 
 2013/10/17

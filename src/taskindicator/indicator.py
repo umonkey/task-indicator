@@ -116,7 +116,8 @@ class Checker(object):
                 self.menu.remove(item)
         self.task_items = []
 
-        data = self.database.get_tasks()
+        data = [t for t in self.database.get_tasks()
+            if t["status"] == "pending"]
 
         for task in sorted(data, key=self.task_sort)[:10]:
             item = gtk.CheckMenuItem(self.format_menu_label(task), use_underline=False)
@@ -234,7 +235,8 @@ class Checker(object):
     def update_status(self):
         """Changes the indicator icon and text label according to running
         tasks."""
-        tasks = [t for t in self.database.get_tasks() if "start" in t]
+        tasks = [t for t in self.database.get_tasks()
+            if t["status"] == "pending" and "start" in t]
 
         if not tasks:
             self.indicator.set_label("Idle")

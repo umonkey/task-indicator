@@ -112,8 +112,8 @@ class Dialog(gtk.Window):
     def refresh(self, tasks):
         """Updates the task list with the new tasks.  Also reloads the full
         task list, to show when the corresponding checkbox is checked."""
-        self.tasks = tasks
-        self.all_tasks = util.find_tasks([])
+        self.tasks = [t for t in tasks if t["status"] == "pending"]
+        self.all_tasks = [t for t in tasks if t["status"] != "deleted"]
         self.refresh_table()
 
     def refresh_table(self):
