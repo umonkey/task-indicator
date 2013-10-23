@@ -1,4 +1,5 @@
 TaskWarrior indicator applet
+============================
 
 This is an applet that displays 10 most important tasks in the
 indicator popup menu, has a dialog to search across all tasks,
