@@ -80,12 +80,17 @@ class Project(gtk.ComboBox):
         self.refresh()
 
     def refresh(self, projects=None):
+        print("Refreshing project combo contents.")
+
+        old_text = self.get_text()
         self.store.clear()
         if projects:
             projects = list(projects)  # copy
             projects.insert(0, "(none)")
             for project in sorted(projects):
                 self.store.append([project])
+        if old_text:
+            self.set_text(old_text)
 
     def set_text(self, value):
         self.value = value
@@ -96,10 +101,11 @@ class Project(gtk.ComboBox):
                 return
 
         self.set_active(0)
+        print("Project set to {0}".format(value))
 
     def get_text(self):
         path = self.get_active()
-        if path == 0:
+        if path < 1:
             return None
         return self.store[path][0]
 
@@ -197,7 +203,9 @@ class Dialog(gtk.Window):
         """Updates the start/stop button label according to the current task
         activity status.  If the task is running, then the label is "Stop" and
         the running time is displayed."""
-        if self.task and "start" in self.task:
+        if not self.task.get("uuid"):
+            label = "Add"
+        elif self.task and "start" in self.task:
             dur = self.task.format_current_runtime()
             label = "Stop ({0})".format(dur)
         else:
