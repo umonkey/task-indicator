@@ -19,7 +19,10 @@ classifiers = [
 
 longdesc = """A simple indicator application that helps do simple things with
 TaskWarrior, like finding and adding tasks, starting and stopping them, track
-current activity time, etc.  For more complex operations CLI must be used."""
+current activity time, etc.  Supports task notes.
+
+For more complex operations CLI must be used.
+"""
 
 data_files = [
     ("share/icons/hicolor/scalable/apps", ["icons/hicolor/scalable/apps/taskui.svg", "icons/hicolor/scalable/apps/taskui-active.svg"]),
@@ -31,7 +34,7 @@ setup(
     author_email = 'hex@umonkey.net',
     classifiers = classifiers,
     data_files = data_files,
-    description = 'TaskWarrior indicator.',
+    description = 'TaskWarrior indicator applet',
     long_description = longdesc,
     license = 'GNU GPL',
     name = 'task-indicator',
@@ -40,5 +43,5 @@ setup(
     requires = ['gtk', 'json', 'dateutil'],
     scripts = ['task-indicator'],
     url = 'http://umonkey.net/task-indicator/',
-    version = '1.1'
+    version = '1.3'
 )

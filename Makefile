@@ -1,4 +1,5 @@
 VERSION=1.1
+PYTHON=python
 
 test:
 	python -u indicator.py
@@ -11,3 +12,6 @@ install: sdist
 
 sdist:
 	python setup.py sdist
+
+release:
+	$(PYTHON) setup.py sdist upload --sign
