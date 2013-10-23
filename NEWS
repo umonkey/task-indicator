@@ -1,6 +1,7 @@
 2013/10/23
 
 - Start/Stop buttons no longer reset current project.
+- Fixed parsing tags with taskw.
 
 
 2013/10/18

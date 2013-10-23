@@ -32,6 +32,8 @@ class Task(dict):
     def __getitem__(self, key):
         if key == "urgency":
             return self.get_urgency()
+        elif key == "tags":
+            return self.get("tags", [])
         return super(Task, self).get(key, None)
 
     def get_urgency(self):
@@ -97,7 +99,10 @@ class Tasks(object):
             for kw in shlex.split(line[1:-1]):
                 k, v = kw.split(":", 1)
                 v = v.replace("\/", "/")  # FIXME: must be a better way
-                task[k] = v.decode("utf-8")
+                v = v.decode("utf-8")
+                if k == "tags":
+                    v = v.split(",")
+                task[k] = v
 
             tasks.append(task)
 
@@ -116,8 +121,12 @@ class Tasks(object):
 
 
 if __name__ == "__main__":
+    import sys
+    uuids = sys.argv[1:]
     for task in Tasks():
+        if uuids and task["uuid"] not in uuids:
+            continue
         print(task)
-        if "start" in task:
+        if "start" in task or task["uuid"] in uuids:
             for k, v in sorted(task.items()):
-                print("  {0}: {1}".format(k, v.encode("utf-8")))
+                print("  {0}: {1}".format(k, unicode(v).encode("utf-8")))
