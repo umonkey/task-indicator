@@ -136,9 +136,13 @@ class Dialog(gtk.Window):
             self.grid.attach(l, 0, 1, row, row+1,
                 xoptions=gtk.FILL, yoptions=gtk.FILL, xpadding=2, ypadding=2)
 
-        def add_control(ctl, label):
+        def add_control(ctl, label, vexpand=False):
+            yoptions = gtk.FILL
+            if vexpand:
+                yoptions |= gtk.EXPAND
+
             self.grid.attach(ctl, 1, 2, row, row+1,
-                yoptions=gtk.FILL, xpadding=2, ypadding=2)
+                yoptions=yoptions, xpadding=2, ypadding=2)
             add_label(label)
 
         row = 0
@@ -161,6 +165,10 @@ class Dialog(gtk.Window):
         row += 1
         self.tags = Tags()
         add_control(self.tags, "Tags:")
+
+        row += 1
+        self.notes = gtk.TextView()
+        add_control(self.notes, "Notes:", vexpand=True)
 
         row += 1
         self.completed = gtk.CheckButton("completed")
@@ -186,7 +194,7 @@ class Dialog(gtk.Window):
 
         self.set_title("Task properties")
         self.set_position(gtk.WIN_POS_CENTER)
-        self.set_default_size(600, 100)
+        self.set_default_size(600, 400)
 
         self.set_icon_name("taskui")
 
@@ -231,7 +239,8 @@ class Dialog(gtk.Window):
         self.description.set_text(task["description"])
         self.project.set_text(task["project"])
         self.priority.set_text(task["priority"])
-        self.tags.set_text(", ".join(task.get("tags", [])))
+        self.tags.set_text(", ".join(task["tags"]))
+        self.notes.get_buffer().set_text(task.get_note())
 
         self.completed.set_active(task["status"] == "completed")
 
@@ -270,6 +279,7 @@ class Dialog(gtk.Window):
     def on_close(self, widget):
         self.hide()
 
+        self.save_task_note()
         if self.callback:
             updates = self.get_task_updates(self.task)
             if updates and updates.get("uuid"):
@@ -277,6 +287,13 @@ class Dialog(gtk.Window):
 
         if self.debug:
             gtk.main_quit()
+
+    def save_task_note(self):
+        buf = self.notes.get_buffer()
+        text = buf.get_text(
+            buf.get_start_iter(),
+            buf.get_end_iter())
+        self.task.set_note(text)
 
     def get_task_updates(self, task):
         update = {}
@@ -301,7 +318,7 @@ class Dialog(gtk.Window):
             update["status"] = tmp
 
         tmp = self.tags.get_tags()
-        old_tags = self.task.get("tags", [])
+        old_tags = self.task["tags"]
         if tmp is not None and tmp != old_tags:
             update["tags"] = []
             for k in old_tags:
@@ -321,7 +338,8 @@ class Dialog(gtk.Window):
         if event.keyval == gtk.keysyms.Escape:
             self.hide()
         if event.keyval == gtk.keysyms.Return:
-            self.on_close(widget)
+            if not self.notes.has_focus():
+                self.on_close(widget)
 
     def on_start_stop(self, widget):
         if not self.task.get("uuid"):

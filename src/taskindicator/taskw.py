@@ -6,10 +6,12 @@ from __future__ import print_function
 import logging
 import os
 import shlex
+import sys
 import time
 
 
-logger = logging.getLogger("taskw.py")
+def log(message):
+    print(message, file=sys.stderr)
 
 
 class Task(dict):
@@ -64,6 +66,38 @@ class Task(dict):
 
         return "%u:%02u:%02u" % (hours, minutes, seconds)
 
+    def set_note(self, note):
+        if not isinstance(note, (str, unicode)):
+            raise ValueError("Note must be a text string.")
+
+        if note == self.get_note():
+            return
+
+        if isinstance(note, unicode):
+            note = note.encode("utf-8")
+
+        folder = os.path.join(os.path.dirname(self.database), "notes")
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+            log("Created folder {0}.".format(folder))
+
+        fn = os.path.join(folder, self["uuid"])
+
+        if note.strip():
+            with open(fn, "wb") as f:
+                f.write(note)
+                log("Wrote a note to {0}".format(fn))
+        elif os.path.exists(fn):
+            os.unlink(fn)
+            log("Deleted a note file {0}".format(fn))
+
+    def get_note(self):
+        fn = os.path.join(os.path.dirname(self.database), "notes", self["uuid"])
+        if os.path.exists(fn):
+            with open(fn, "rb") as f:
+                return f.read().decode("utf-8")
+        return u""
+
 
 class Tasks(object):
     def __init__(self, database_folder=None):
@@ -83,7 +117,7 @@ class Tasks(object):
         """Reads the database file, parses it and returns a list of Task object
         instances, which contain all parsed data (values are unicode)."""
         if not os.path.exists(database):
-            logger.warning("Database {0} does not exist.".format(database))
+            log("Database {0} does not exist.".format(database))
             return {}
 
         with open(database, "rb") as f:
