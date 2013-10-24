@@ -168,6 +168,7 @@ class Dialog(gtk.Window):
 
         row += 1
         self.notes = gtk.TextView()
+        self.notes.set_wrap_mode(gtk.WRAP_WORD)
         add_control(self.notes, "Notes:", vexpand=True)
 
         row += 1
