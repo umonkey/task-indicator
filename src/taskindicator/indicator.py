@@ -58,8 +58,8 @@ class Checker(object):
         icondir = os.getenv("TASK_INDICATOR_ICONDIR")
         if icondir:
             self.indicator.set_icon_theme_path(icondir)
-            print("Appindicator theme path: %s, wanted: %s" % (self.indicator.get_icon_theme_path(), icondir))
-
+            print("Appindicator theme path: {0}, wanted: {1}".format(
+                self.indicator.get_icon_theme_path(), icondir))
 
         self.indicator.set_status(appindicator.STATUS_ACTIVE)
         self.indicator.set_attention_icon(self.icon_attn)
@@ -140,7 +140,8 @@ class Checker(object):
 
     def format_menu_label(self, task):
         proj = task["project"].split(".")[-1]
-        title = u"%s:\t%s" % (proj, util.strip_description(task["description"]))
+        title = u"{0}:\t{1}".format(proj,
+            util.strip_description(task["description"]))
         return title
 
     def task_sort(self, task):
@@ -200,7 +201,7 @@ class Checker(object):
                 elif k == "description":
                     command.append(v)
                 else:
-                    command.append("%s:%s" % (k, v))
+                    command.append("{0}:{1}".format(k, v))
             util.run_command(command)
 
         self.update_status()
@@ -246,7 +247,7 @@ class Checker(object):
             self.indicator.set_status(appindicator.STATUS_ATTENTION)
             self.stop_item.show()
 
-            msg = "%u/%s" % (len(tasks),
+            msg = "{0}/{1}".format(len(tasks),
                 self.format_duration(self.get_duration()))
 
             self.indicator.set_label(msg)

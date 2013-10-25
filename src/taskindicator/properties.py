@@ -234,7 +234,7 @@ class Dialog(gtk.Window):
         self.description.grab_focus()
 
     def show_existing_task(self, task):
-        print("Showing task %s ..." % task["uuid"], file=sys.stderr)
+        print("Showing task {0} ...".format(task["uuid"]), file=sys.stderr)
 
         self.uuid.set_text(task["uuid"])
         self.description.set_text(task["description"])
@@ -358,20 +358,23 @@ class Dialog(gtk.Window):
         if not updates:
             print("new task not added: no changes.", file=sys.stderr)
         else:
-            print("new task: %s" % updates, file=sys.stderr)
+            print("new task: {0}".format(updates), file=sys.stderr)
             self.callback(updates)
 
     def on_task_start(self, task):
-        print("task %s start" % self.task["uuid"], file=sys.stderr)
+        print("task {0} start".format(self.task["uuid"]),
+            file=sys.stderr)
 
     def on_task_stop(self, task):
-        print("task %s stop" % self.task["uuid"], file=sys.stderr)
+        print("task {0} stop".format(self.task["uuid"]),
+            file=sys.stderr)
 
 
 def main():
     def take2(task):
         if len(task) > 1:
-            print("Task update: %s" % task, file=sys.stderr)
+            print("Task update: {0}".format(task),
+                file=sys.stderr)
 
     w = Dialog(callback=take2, debug=True)
     w.show_task({"uuid": "2ea544b9-a068-4e3e-a99d-5235ed53a17f",

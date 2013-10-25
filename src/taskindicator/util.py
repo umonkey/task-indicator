@@ -16,7 +16,8 @@ from taskindicator import taskw
 
 
 def run_command(command):
-    print("> %s" % " ".join(command), file=sys.stderr)
+    print("> {0}".format(" ".join(command),
+        file=sys.stderr))
     p = subprocess.Popen(command, stdout=subprocess.PIPE)
     return p.communicate()[0]
 
@@ -37,11 +38,12 @@ def get_icon_path(icon_name):
 
     icon = theme.lookup_icon(icon_name, 0, 0)
     if icon:
-        print("Found icon %s: %s" % (icon_name, icon.get_filename()),
-            file=sys.stderr)
+        print("Found icon {0}: {1}".format(icon_name,
+            icon.get_filename()), file=sys.stderr)
         return icon.get_filename()
 
-    print("No icon named %s" % icon_name, file=sys.stderr)
+    print("No icon named {0}".format(icon_name),
+        file=sys.stderr)
 
 
 def get_task_info(uuid):

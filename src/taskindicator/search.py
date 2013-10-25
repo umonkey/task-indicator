@@ -88,7 +88,6 @@ class Dialog(gtk.Window):
         self.connect("key-press-event", self._on_keypress)
 
     def filter_tasks(self, model, iter):
-        # print("filter_tasks %s %s" % (model, iter), file=sys.stderr)
         if self.query is None:
             return True
 
@@ -171,4 +170,5 @@ class Dialog(gtk.Window):
             self.hide()
 
     def on_activate_task(self, uuid):
-        print("Activate task %s" % uuid, file=sys.stderr)
+        print("Activate task {0}".format(uuid),
+            file=sys.stderr)
