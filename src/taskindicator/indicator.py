@@ -120,7 +120,8 @@ class Checker(object):
             if t["status"] == "pending"]
 
         for task in sorted(data, key=self.task_sort)[:10]:
-            item = gtk.CheckMenuItem(self.format_menu_label(task), use_underline=False)
+            item = gtk.CheckMenuItem(self.format_menu_label(task),
+                use_underline=False)
             if task.get("start"):
                 item.set_active(True)
             item.connect("activate", self.on_task_toggle)
@@ -149,7 +150,7 @@ class Checker(object):
         is_pinned = "pin" in task.get("tags", [])
         is_running = "start" in task
         is_endless = "endless" in task.get("tags", [])
-        pri = {"H":3, "M": 2, "L": 1}.get(task.get("priority"), 0)
+        pri = {"H": 3, "M": 2, "L": 1}.get(task.get("priority"), 0)
         return (-is_running, -is_pinned, is_endless, -pri,
             -float(task.get("urgency", 0)))
 

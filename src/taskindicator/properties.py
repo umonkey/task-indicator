@@ -133,7 +133,7 @@ class Dialog(gtk.Window):
         def add_label(text):
             l = gtk.Label(text)
             l.set_alignment(0, 0.5)
-            self.grid.attach(l, 0, 1, row, row+1,
+            self.grid.attach(l, 0, 1, row, row + 1,
                 xoptions=gtk.FILL, yoptions=gtk.FILL, xpadding=2, ypadding=2)
 
         def add_control(ctl, label, vexpand=False):
@@ -141,7 +141,7 @@ class Dialog(gtk.Window):
             if vexpand:
                 yoptions |= gtk.EXPAND
 
-            self.grid.attach(ctl, 1, 2, row, row+1,
+            self.grid.attach(ctl, 1, 2, row, row + 1,
                 yoptions=yoptions, xpadding=2, ypadding=2)
             add_label(label)
 
@@ -173,12 +173,12 @@ class Dialog(gtk.Window):
 
         row += 1
         self.completed = gtk.CheckButton("completed")
-        self.grid.attach(self.completed, 1, 2, row, row+1,
+        self.grid.attach(self.completed, 1, 2, row, row + 1,
             yoptions=gtk.FILL, xpadding=2, ypadding=2)
 
         row += 1
         self.bbx = gtk.HButtonBox()
-        self.grid.attach(self.bbx, 0, 2, row, row+1,
+        self.grid.attach(self.bbx, 0, 2, row, row + 1,
             yoptions=gtk.FILL, xpadding=2, ypadding=2)
 
         self.start = gtk.Button("Start")

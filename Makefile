@@ -2,7 +2,7 @@ VERSION=1.1
 PYTHON=python
 
 test:
-	python -u indicator.py
+	pep8 src/taskindicator/*.py
 
 clean:
 	find . -name \*.pyc -delete

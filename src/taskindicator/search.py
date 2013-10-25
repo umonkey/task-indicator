@@ -31,7 +31,8 @@ class Dialog(gtk.Window):
 
         self.query_ctl = gtk.Entry()
         self.query_ctl.connect("changed", self._on_query_changed)
-        self.vbox.pack_start(self.query_ctl, expand=False, fill=True, padding=4)
+        self.vbox.pack_start(self.query_ctl, expand=False,
+            fill=True, padding=4)
 
         self.model = model = gtk.ListStore(str, str, str, str, str, str)
         self.model_filter = model_filter = model.filter_new()

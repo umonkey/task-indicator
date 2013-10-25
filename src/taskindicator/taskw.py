@@ -92,7 +92,8 @@ class Task(dict):
             log("Deleted a note file {0}".format(fn))
 
     def get_note(self):
-        fn = os.path.join(os.path.dirname(self.database), "notes", self["uuid"])
+        fn = os.path.join(os.path.dirname(self.database),
+            "notes", self["uuid"])
         if os.path.exists(fn):
             with open(fn, "rb") as f:
                 return f.read().decode("utf-8")
