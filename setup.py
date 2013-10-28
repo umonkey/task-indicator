@@ -9,7 +9,7 @@ classifiers = [
     'Environment :: X11 Applications :: GTK',
     'Intended Audience :: Developers',
     'Intended Audience :: End Users/Desktop',
-    'License :: OSI Approved :: GNU General Public License (GPL)',
+    'License :: OSI Approved :: MIT License',
     'Natural Language :: English',
     'Operating System :: Unix',
     'Programming Language :: Python',
