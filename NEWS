@@ -1,7 +1,8 @@
-2013/10/28 (version 1.5)
+2013/10/28 (version 1.6)
 
 - License changed to MIT.
 - Fixed adding new tasks.
+- Fixed notes from last edited task showing up in the new task dialog.
 
 
 2013/10/23 (version 1.3)

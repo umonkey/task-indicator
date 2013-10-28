@@ -223,6 +223,7 @@ class Dialog(gtk.Window):
         self.start.set_label(label)
 
     def show_task(self, task):
+        """Opens the task editor dialog (new if no uuid)."""
         if isinstance(task, dict):
             task = Task(task)
         elif not isinstance(task, dict):
@@ -247,7 +248,7 @@ class Dialog(gtk.Window):
         self.project.set_text(task["project"])
         self.priority.set_text(task["priority"])
         self.tags.set_text(", ".join(task["tags"]))
-        self.notes.get_buffer().set_text(task.get_note())
+        self._set_note(task.get_note())
 
         self.completed.set_active(task["status"] == "completed")
 
@@ -265,6 +266,7 @@ class Dialog(gtk.Window):
         self.priority.set_text("M")
         self.tags.set_text("")
         self.completed.set_active(False)
+        self._set_note("")
 
         self.description.grab_focus()
 
@@ -305,6 +307,10 @@ class Dialog(gtk.Window):
             buf.get_start_iter(),
             buf.get_end_iter())
         return text
+
+    def _set_note(self, text):
+        """Changes the contents of the note editor."""
+        self.notes.get_buffer().set_text(text)
 
     def get_task_updates(self, task):
         update = {}
