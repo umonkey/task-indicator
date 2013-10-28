@@ -15,6 +15,7 @@ pygtk.require("2.0")
 import gtk
 
 from taskindicator import util
+from taskindicator.taskw import Task
 
 
 __author__ = "Justin Forest"
@@ -222,6 +223,11 @@ class Dialog(gtk.Window):
         self.start.set_label(label)
 
     def show_task(self, task):
+        if isinstance(task, dict):
+            task = Task(task)
+        elif not isinstance(task, dict):
+            raise ValueError("task must be a dict or a taskw.Task")
+
         self.task = task
 
         if task.get("uuid"):
@@ -290,11 +296,15 @@ class Dialog(gtk.Window):
             gtk.main_quit()
 
     def save_task_note(self):
+        text = self._get_note()
+        self.task.set_note(text)
+
+    def _get_note(self):
         buf = self.notes.get_buffer()
         text = buf.get_text(
             buf.get_start_iter(),
             buf.get_end_iter())
-        self.task.set_note(text)
+        return text
 
     def get_task_updates(self, task):
         update = {}
@@ -359,7 +369,13 @@ class Dialog(gtk.Window):
             print("new task not added: no changes.", file=sys.stderr)
         else:
             print("new task: {0}".format(updates), file=sys.stderr)
-            self.callback(updates)
+            uuid = self.callback(updates)
+            if not isinstance(uuid, str):
+                raise RuntimeError("Task editor callback must return an uuid.")
+
+            if not self.task["uuid"]:
+                self.task["uuid"] = uuid
+                self.uuid.set_text(uuid)
 
     def on_task_start(self, task):
         print("task {0} start".format(self.task["uuid"]),

@@ -14,6 +14,7 @@ import datetime
 import dateutil.parser
 import json
 import os
+import re
 import sys
 import time
 
@@ -203,9 +204,16 @@ class Checker(object):
                     command.append(v)
                 else:
                     command.append("{0}:{1}".format(k, v))
-            util.run_command(command)
+            output = util.run_command(command)
+
+            for _taskno in re.findall("Created task (\d+)", output):
+                uuid = util.run_command(["task", _taskno, "uuid"]).strip()
+                print("New task uuid: {0}".format(uuid),
+                    file=sys.stderr)
+                break
 
         self.update_status()
+        return uuid
 
     def main(self):
         """Enters the main program loop"""

@@ -14,10 +14,11 @@ def log(message):
     print(message, file=sys.stderr)
 
 
-class Task(dict):
-    def __init__(self, database):
-        self.database = database
+def get_database_folder():
+    return os.path.expanduser("~/.task")
 
+
+class Task(dict):
     def __repr__(self):
         s = "<Task {0}".format(self["uuid"][:8])
         s += ", status={0}".format(self["status"])
@@ -67,6 +68,9 @@ class Task(dict):
         return "%u:%02u:%02u" % (hours, minutes, seconds)
 
     def set_note(self, note):
+        if not self.get("uuid"):
+            raise RuntimeError("Cannot set a note for an unsaved task (no uuid).")
+
         if not isinstance(note, (str, unicode)):
             raise ValueError("Note must be a text string.")
 
@@ -76,7 +80,8 @@ class Task(dict):
         if isinstance(note, unicode):
             note = note.encode("utf-8")
 
-        folder = os.path.join(os.path.dirname(self.database), "notes")
+        folder = os.path.join(os.path.dirname(
+            get_database_folder()), "notes")
         if not os.path.exists(folder):
             os.makedirs(folder)
             log("Created folder {0}.".format(folder))
@@ -92,8 +97,11 @@ class Task(dict):
             log("Deleted a note file {0}".format(fn))
 
     def get_note(self):
-        fn = os.path.join(os.path.dirname(self.database),
-            "notes", self["uuid"])
+        if not self.get("uuid"):
+            return None
+
+        fn = os.path.join(os.path.dirname(
+            get_database_folder()), "notes", self["uuid"])
         if os.path.exists(fn):
             with open(fn, "rb") as f:
                 return f.read().decode("utf-8")
@@ -101,12 +109,10 @@ class Task(dict):
 
 
 class Tasks(object):
-    def __init__(self, database_folder=None):
-        if database_folder is None:
-            database_folder = os.path.expanduser("~/.task")
-        self.database_folder = database_folder
-
+    def __init__(self):
         self.tasks = []
+
+        database_folder = get_database_folder()
 
         db = os.path.join(database_folder, "pending.data")
         self.tasks += self.load_data(db)
@@ -130,7 +136,7 @@ class Tasks(object):
                 raise ValueError("Unsupported file format " \
                     "in {0}".format(filename))
 
-            task = Task(database)
+            task = Task()
             for kw in shlex.split(line[1:-1]):
                 k, v = kw.split(":", 1)
                 v = v.replace("\/", "/")  # FIXME: must be a better way

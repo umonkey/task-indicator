@@ -22,6 +22,18 @@ TaskWarrior, like finding and adding tasks, starting and stopping them, track
 current activity time, etc.  Supports task notes.
 
 For more complex operations CLI must be used.
+
+Indicator applet and menu screenshot:
+
+.. image:: http://umonkey.net/task-indicator/menu.png
+
+Task editor:
+
+.. image:: http://umonkey.net/task-indicator/info.png
+
+Search dialog:
+
+.. image:: http://umonkey.net/task-indicator/search.png
 """
 
 data_files = [
@@ -36,12 +48,12 @@ setup(
     data_files = data_files,
     description = 'TaskWarrior indicator applet',
     long_description = longdesc,
-    license = 'GNU GPL',
+    license = 'MIT',
     name = 'task-indicator',
     package_dir = {'': 'src'},
     packages = ['taskindicator'],
     requires = ['gtk', 'json', 'dateutil'],
     scripts = ['task-indicator'],
-    url = 'http://umonkey.net/task-indicator/',
-    version = '1.4'
+    url = 'http://umonkey.net/task-indicator/en/',
+    version = '1.5'
 )
