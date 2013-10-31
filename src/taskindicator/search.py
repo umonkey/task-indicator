@@ -5,6 +5,7 @@ from __future__ import print_function
 import gtk
 
 from taskindicator import util
+from taskindicator.taskw import Task
 
 
 class Dialog(gtk.Window):
@@ -82,7 +83,11 @@ class Dialog(gtk.Window):
         self.close_button = gtk.Button("Close")
         hbox.pack_end(self.close_button, expand=False, fill=False)
 
+        self.add_button = gtk.Button("Add...")
+        hbox.pack_end(self.add_button, expand=False, fill=False)
+
     def setup_signals(self):
+        self.add_button.connect("clicked", self._on_add_clicked)
         self.close_button.connect("clicked", self._on_close)
         self.show_all_button.connect("clicked", self._on_show_all)
         self.connect("delete_event", self._on_delete)
@@ -163,6 +168,9 @@ class Dialog(gtk.Window):
 
     def _on_close(self, widget):
         self.hide()
+
+    def _on_add_clicked(self, widget):
+        self.on_activate_task(None)
 
     def _on_show_all(self, widget):
         self.refresh_table()

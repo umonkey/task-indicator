@@ -25,6 +25,7 @@ import gtk
 from taskindicator import database
 from taskindicator import properties
 from taskindicator import search
+from taskindicator import taskw
 from taskindicator import util
 
 
@@ -166,7 +167,12 @@ class Checker(object):
         self.search_dialog.show_all()
 
     def on_search_callback(self, uuid):
-        self.dialog.show_task(util.get_task_info(uuid))
+        """Called when opening a task in the search window."""
+        if uuid is None:
+            task = taskw.Task()
+        else:
+            task = util.get_task_info(uuid)
+        self.dialog.show_task(task)
 
     def on_task_toggle(self, widget):
         if self.toggle_lock:
