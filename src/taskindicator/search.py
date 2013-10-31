@@ -76,7 +76,7 @@ class Dialog(gtk.Window):
         hbox = gtk.HBox(homogeneous=False, spacing=4)
         self.vbox.pack_start(hbox, expand=False, fill=True)
 
-        self.show_all_button = gtk.CheckButton("Show all")
+        self.show_all_button = gtk.CheckButton("Show completed")
         hbox.pack_start(self.show_all_button, expand=True, fill=True)
 
         self.close_button = gtk.Button("Close")
@@ -149,9 +149,10 @@ class Dialog(gtk.Window):
         return True
 
     def _on_row_activated(self, view, row, column):
+        """Open a task editor dialog."""
         model = view.get_model()
         uuid = model[row][0]
-        self.hide()
+        # self.hide()
         self.on_activate_task(uuid)
 
     def _on_query_changed(self, ctl):

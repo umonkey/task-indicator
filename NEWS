@@ -1,3 +1,11 @@
+2013/10/31 (version 1.7)
+
+- Search window no longer closes when a task dialog is opened
+  by double-clicking a table row.
+- The "Show all" checkbox in the search window is now named
+  "show completed".
+
+
 2013/10/28 (version 1.6)
 
 - License changed to MIT.
