@@ -171,3 +171,6 @@ if __name__ == "__main__":
         if "start" in task or task["uuid"] in uuids:
             for k, v in sorted(task.items()):
                 print("  {0}: {1}".format(k, unicode(v).encode("utf-8")))
+
+
+__all__ = ["Task", "Tasks"]
