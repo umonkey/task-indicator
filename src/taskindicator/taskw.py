@@ -134,7 +134,7 @@ class Tasks(object):
         for line in raw_data.rstrip().split("\n"):
             if not line.startswith("[") or not line.endswith("]"):
                 raise ValueError("Unsupported file format " \
-                    "in {0}".format(filename))
+                    "in {0}".format(database))
 
             task = Task()
             for kw in shlex.split(line[1:-1]):
