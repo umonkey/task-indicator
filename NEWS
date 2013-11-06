@@ -1,6 +1,7 @@
 2013/11/06 (version 1.9)
 
 - Fixed a bug with tasks that have no project assigned.
+- Strip trailing URLs from task descriptions.
 
 
 2013/11/05 (version 1.8)

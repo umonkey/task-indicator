@@ -27,10 +27,18 @@ def find_tasks(args):
 
 
 def strip_description(text):
+    words = text.split(" ")
+
     if text.startswith("(bw)"):
-        words = text.split(" ")
-        text = " ".join(words[2:-2])
-    return text
+        words = words[2:-2]
+
+    # Strip shortened urls (used by bugwarrior, etc).
+    if len(words) > 1 and "http://" in words[-1]:
+        del words[-1]
+        if words[-1] == "..":
+            del words[-1]
+
+    return " ".join(words)
 
 
 def get_icon_path(icon_name):
