@@ -81,16 +81,10 @@ class Checker(object):
     def on_start_task(self, task):
         util.run_command(["task", task["uuid"], "start"])
         self.update_status()
-        self.open_task_webpage(task)
 
     def on_stop_task(self, task):
         util.run_command(["task", task["uuid"], "stop"])
         self.update_status()
-
-    def open_task_webpage(self, task):
-        for word in task["description"].split(" "):
-            if "://" in word:
-                util.run_command(["xdg-open", word])
 
     def menu_setup(self):
         self.menu = gtk.Menu()
