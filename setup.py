@@ -25,15 +25,15 @@ For more complex operations CLI must be used.
 
 Indicator applet and menu screenshot:
 
-.. image:: http://umonkey.net/task-indicator/menu.png
+.. image:: http://umonkey.net/projects/task-indicator/menu.png
 
 Task editor:
 
-.. image:: http://umonkey.net/task-indicator/info.png
+.. image:: http://umonkey.net/projects/task-indicator/info.png
 
 Search dialog:
 
-.. image:: http://umonkey.net/task-indicator/search.png
+.. image:: http://umonkey.net/projects/task-indicator/search.png
 """
 
 data_files = [
