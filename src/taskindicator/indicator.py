@@ -142,7 +142,7 @@ class Checker(object):
             self.task_items.append(item)
 
     def format_menu_label(self, task):
-        proj = task["project"].split(".")[-1]
+        proj = task.get("project", "").split(".")[-1]
         title = u"{0}:\t{1}".format(proj,
             util.strip_description(task["description"]))
         return title
