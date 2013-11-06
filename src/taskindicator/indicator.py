@@ -142,9 +142,10 @@ class Checker(object):
             self.task_items.append(item)
 
     def format_menu_label(self, task):
-        proj = task.get("project", "").split(".")[-1]
-        title = u"{0}:\t{1}".format(proj,
-            util.strip_description(task["description"]))
+        title = util.strip_description(task["description"])
+        if "project" in task:
+            title += u" [{0}]".format(
+                task["project"].split(".")[-1])
         return title
 
     def task_sort(self, task):

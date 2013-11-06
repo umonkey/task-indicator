@@ -9,3 +9,9 @@ tasks, can add or modify tasks, etc.  Supports task notes.
 Send bugs and comments to <hex@umonkey.net>.
 
 Home page: <http://umonkey.net/task-indicator/>
+
+
+Thanks
+======
+
+- Andriy Kovtun <kovtunos@yandex.ru> for bug reports.

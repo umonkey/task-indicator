@@ -2,6 +2,8 @@
 
 - Fixed a bug with tasks that have no project assigned.
 - Strip trailing URLs from task descriptions.
+- Moved project name to the end of the menu item, and only show
+  it if the task has one.
 
 
 2013/11/05 (version 1.8)

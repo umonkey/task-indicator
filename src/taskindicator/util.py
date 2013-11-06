@@ -38,7 +38,7 @@ def strip_description(text):
         if words[-1] == "..":
             del words[-1]
 
-    return " ".join(words)
+    return " ".join(words).strip()
 
 
 def get_icon_path(icon_name):
