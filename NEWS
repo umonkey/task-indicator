@@ -1,10 +1,11 @@
-2013/11/06 (version 1.10)
+2013/11/06 (version 1.11)
 
 - Fixed a bug with tasks that have no project assigned.
 - Strip trailing URLs from task descriptions.
 - Moved project name to the end of the menu item, and only show
   it if the task has one.
 - Don't open task webpage on start (there's a separate button for that).
+- Fixed an error when a task had no priority.
 
 
 2013/11/05 (version 1.8)

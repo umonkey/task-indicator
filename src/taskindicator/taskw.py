@@ -45,8 +45,9 @@ class Task(dict):
 
         value += min((time.time() - int(self["entry"])) / 1000, 10)
 
-        pri = {"L": 0, "M": 10, "H": 20}
-        value += pri.get(self["priority"])
+        if "priority" in self:
+            pri = {"L": 0, "M": 10, "H": 20}
+            value += pri.get(self["priority"])
 
         return value
 
