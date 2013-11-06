@@ -1,4 +1,4 @@
-2013/11/06 (version 1.11)
+2013/11/06 (version 1.12)
 
 - Fixed a bug with tasks that have no project assigned.
 - Strip trailing URLs from task descriptions.
@@ -6,6 +6,7 @@
   it if the task has one.
 - Don't open task webpage on start (there's a separate button for that).
 - Fixed an error when a task had no priority.
+- Database location is now requested from TaskWarrior, not hard-coded.
 
 
 2013/11/05 (version 1.8)

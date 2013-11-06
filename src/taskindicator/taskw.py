@@ -6,6 +6,7 @@ from __future__ import print_function
 import logging
 import os
 import shlex
+import subprocess
 import sys
 import time
 
@@ -15,7 +16,18 @@ def log(message):
 
 
 def get_database_folder():
-    return os.path.expanduser("~/.task")
+    p = subprocess.Popen(["task", "_show"],
+        stdout=subprocess.PIPE)
+    out, err = p.communicate()
+
+    if p.returncode:
+        raise RuntimeError("Could not read TaskWarrior config.")
+
+    for line in out.split("\n"):
+        if line.startswith("data.location="):
+            return line.split("=", 1)[1]
+
+    raise RuntimeException("Could not find database location.")
 
 
 class Task(dict):
