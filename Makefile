@@ -9,6 +9,7 @@ clean:
 
 install: sdist
 	sudo pip install --upgrade dist/task-indicator-$(VERSION).tar.gz
+	rm -rf MANIFEST dist
 
 sdist:
 	python setup.py sdist
