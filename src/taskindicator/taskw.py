@@ -3,6 +3,7 @@
 
 from __future__ import print_function
 
+import json
 import logging
 import os
 import shlex
@@ -45,23 +46,9 @@ class Task(dict):
         return s
 
     def __getitem__(self, key):
-        if key == "urgency":
-            return self.get_urgency()
-        elif key == "tags":
+        if key == "tags":
             return self.get("tags", [])
         return super(Task, self).get(key, None)
-
-    def get_urgency(self):
-        # FIXME: implement the right algo.
-        value = 0.0
-
-        value += min((time.time() - int(self["entry"])) / 1000, 10)
-
-        if "priority" in self:
-            pri = {"L": 0, "M": 10, "H": 20}
-            value += pri.get(self["priority"])
-
-        return value
 
     def get_current_runtime(self):
         if not self.get("start"):
@@ -135,7 +122,17 @@ class Tasks(object):
 
     def load_data(self, database):
         """Reads the database file, parses it and returns a list of Task object
-        instances, which contain all parsed data (values are unicode)."""
+        instances, which contain all parsed data (values are unicode).
+
+        This home-made parser returns raw timestamps, while 'task export'
+        returns formatted UTC based dates which are hard to convert to
+        timestamps to calculate activity duration, etc.
+
+        TODO: find out a way to convert dates like '20130201T103640Z' to UNIX
+        timestamp or at least a datetime.
+        """
+        _start = time.time()
+
         if not os.path.exists(database):
             log("Database {0} does not exist.".format(database))
             return {}
@@ -159,6 +156,33 @@ class Tasks(object):
                 task[k] = v
 
             tasks.append(task)
+
+        tasks = self.merge_exported(tasks)
+
+        log("Task database read in {0} seconds.".format(time.time() - _start))
+
+        return tasks
+
+    def merge_exported(self, tasks):
+        """Merges data reported by task.  This is primarily used to get real
+        urgency, maybe something else in the future."""
+        p = subprocess.Popen(["task", "rc.json.array=1", "export"],
+            stdout=subprocess.PIPE)
+        out, err = p.communicate()
+
+        _tasks = {}
+        for em in json.loads(out):
+            _tasks[em["uuid"]] = em
+
+        for idx, task in enumerate(tasks):
+            if task["uuid"] not in _tasks:
+                log("Warning: task {0} not exported by TaskWarrior.".format(
+                    task["uuid"]))
+                continue
+
+            _task = _tasks[task["uuid"]]
+            if "urgency" in _task:
+                tasks[idx]["urgency"] = float(_task["urgency"])
 
         return tasks
 
