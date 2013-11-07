@@ -69,7 +69,8 @@ class Task(dict):
 
     def set_note(self, note):
         if not self.get("uuid"):
-            raise RuntimeError("Cannot set a note for an unsaved task (no uuid).")
+            raise RuntimeError(
+                "Cannot set a note for an unsaved task (no uuid).")
 
         if not isinstance(note, (str, unicode)):
             raise ValueError("Note must be a text string.")
