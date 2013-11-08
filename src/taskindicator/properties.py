@@ -111,6 +111,26 @@ class Project(gtk.ComboBox):
         return self.store[path][0]
 
 
+class NoteEditor(gtk.ScrolledWindow):
+    def __init__(self):
+        super(NoteEditor, self).__init__()
+        self.set_policy(gtk.POLICY_ALWAYS, gtk.POLICY_ALWAYS)
+
+        self._tv = gtk.TextView()
+        self._tv.set_wrap_mode(gtk.WRAP_WORD)
+        self.add(self._tv)
+
+    def set_text(self, text):
+        self._tv.get_buffer().set_text(text)
+
+    def get_text(self):
+        buf = self._tv.get_buffer()
+        text = buf.get_text(
+            buf.get_start_iter(),
+            buf.get_end_iter())
+        return text
+
+
 class Tags(gtk.Entry):
     def get_tags(self):
         return [t for t in re.split(",\s*", self.get_text()) if t.strip()]
@@ -168,8 +188,7 @@ class Dialog(gtk.Window):
         add_control(self.tags, "Tags:")
 
         row += 1
-        self.notes = gtk.TextView()
-        self.notes.set_wrap_mode(gtk.WRAP_WORD)
+        self.notes = NoteEditor()
         add_control(self.notes, "Notes:", vexpand=True)
 
         row += 1
@@ -302,15 +321,11 @@ class Dialog(gtk.Window):
         self.task.set_note(text)
 
     def _get_note(self):
-        buf = self.notes.get_buffer()
-        text = buf.get_text(
-            buf.get_start_iter(),
-            buf.get_end_iter())
-        return text
+        return self.notes.get_text()
 
     def _set_note(self, text):
         """Changes the contents of the note editor."""
-        self.notes.get_buffer().set_text(text)
+        self.notes.set_text(text)
 
     def get_task_updates(self, task):
         update = {}

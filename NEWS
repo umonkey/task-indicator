@@ -1,3 +1,9 @@
+2013/11/08 (version 1.14)
+
+- Long notes now have a vertical scroll-bar and don't extend
+  the window vertically.
+
+
 2013/11/07 (version 1.13)
 
 - Use real task urgency, which tasks are now sorted by.
