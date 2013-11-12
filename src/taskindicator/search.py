@@ -35,7 +35,7 @@ class Dialog(gtk.Window):
         self.vbox.pack_start(self.query_ctl, expand=False,
             fill=True, padding=4)
 
-        self.model = model = gtk.ListStore(str, str, str, str, str, str)
+        self.model = model = gtk.ListStore(str, str, str, str, str, str, bool)
         self.model_filter = model_filter = model.filter_new()
         model_filter.set_visible_func(self.filter_tasks)
 
@@ -114,6 +114,12 @@ class Dialog(gtk.Window):
         else:
             cell.set_property("foreground", "gray")
 
+        running = model[iter][6]
+        if running:
+            cell.set_property("weight", 800)
+        else:
+            cell.set_property("weight", 400)
+
     def refresh(self, tasks):
         """Updates the task list with the new tasks.  Also reloads the full
         task list, to show when the corresponding checkbox is checked."""
@@ -131,9 +137,11 @@ class Dialog(gtk.Window):
         for task in sorted(tasks, key=self.task_sort_func):
             row = [task["uuid"],
                   task["status"],
-                  task["project"], util.strip_description(task["description"]),
+                  task["project"],
+                  util.strip_description(task["description"]),
                   "%.1f" % float(task["urgency"]),
-                  task.get("priority", "L")]
+                  task.get("priority", "L"),
+                  not not task.get("start")]
             self.model.append(row)
 
         title = "Search for tasks (%u)" % len(tasks)

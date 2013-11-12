@@ -130,6 +130,9 @@ class NoteEditor(gtk.ScrolledWindow):
             buf.get_end_iter())
         return text
 
+    def has_focus(self):
+        return self._tv.has_focus()
+
 
 class Tags(gtk.Entry):
     def get_tags(self):
