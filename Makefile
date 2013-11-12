@@ -11,8 +11,8 @@ install: sdist
 	sudo pip install --upgrade dist/task-indicator-$(VERSION).tar.gz
 	rm -rf MANIFEST dist
 
-sdist:
+sdist: test
 	python setup.py sdist
 
-release:
+release: test
 	$(PYTHON) setup.py sdist upload --sign

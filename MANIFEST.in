@@ -1,0 +1,4 @@
+include NEWS
+include TODO
+include README
+recursive-include src *.py
