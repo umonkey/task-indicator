@@ -15,6 +15,7 @@ import dateutil.parser
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 
@@ -156,7 +157,9 @@ class Checker(object):
             "description": "", "priority": "M"})
 
     def on_pull_tasks(self, widget):
-        util.run_command(["bugwarrior-pull"])
+        p = subprocess.Popen(["bugwarrior-pull"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
 
     def on_show_all_tasks(self, widget):
         self.search_dialog.show_all()

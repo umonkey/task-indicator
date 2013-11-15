@@ -1,11 +1,11 @@
-VERSION=1.15
+VERSION=1.16
 PYTHON=python
 
 test:
 	pep8 src/taskindicator/*.py
 
 clean:
-	find . -name \*.pyc -delete
+	find . -regex '.*\.\(pyc\|orig\)$$' -delete
 
 install: sdist
 	sudo pip install --upgrade dist/task-indicator-$(VERSION).tar.gz
