@@ -16,3 +16,4 @@ sdist: test
 
 release: test
 	$(PYTHON) setup.py sdist upload --sign
+	-xdg-open https://pypi.python.org/pypi/task-indicator
