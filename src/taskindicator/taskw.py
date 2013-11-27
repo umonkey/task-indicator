@@ -50,6 +50,11 @@ class Task(dict):
             return self.get("tags", [])
         return super(Task, self).get(key, None)
 
+    def is_active(self):
+        if not self.get("start"):
+            return False
+        return True
+
     def get_current_runtime(self):
         if not self.get("start"):
             return 0

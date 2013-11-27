@@ -1,3 +1,8 @@
+2013/11/27 (version 1.17)
+
+- Added a popup menu to start/stop tasks in the search dialog.
+
+
 2013/11/15 (version 1.16)
 
 - Calling bugwarrior from menu no longer blocks the UI.

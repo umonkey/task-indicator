@@ -187,6 +187,10 @@ class Dialog(gtk.Window):
         add_control(self.priority, "Priority:")
 
         row += 1
+        self.wait_date = gtk.Entry()
+        add_control(self.wait_date, "Wait until:")
+
+        row += 1
         self.tags = Tags()
         add_control(self.tags, "Tags:")
 
@@ -347,6 +351,10 @@ class Dialog(gtk.Window):
         tmp = self.priority.get_text()
         if tmp is not None and tmp != self.task.get("priority"):
             update["priority"] = tmp
+
+        tmp = self.wait_date.get_text()
+        if tmp and tmp != self.task.get("wait"):
+            pass
 
         tmp = "completed" if self.completed.get_active() else "pending"
         if tmp is not None and tmp != self.task.get("status"):

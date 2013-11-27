@@ -3,6 +3,8 @@
 from __future__ import print_function
 
 import gtk
+import subprocess
+import sys
 
 from taskindicator import util
 from taskindicator.taskw import Task
@@ -13,8 +15,11 @@ class Dialog(gtk.Window):
         super(Dialog, self).__init__()
         self.query = None
         self.tasks = None
+        self.selected_task_uuid = None
+
         self.setup_window()
         self.setup_controls()
+        self._setup_popup_menu()
         self.setup_signals()
 
     def setup_window(self):
@@ -25,6 +30,36 @@ class Dialog(gtk.Window):
         # self.add_buttons(gtk.STOCK_CLOSE, gtk.RESPONSE_REJECT)
 
         self.set_icon_name("taskui")
+
+    def _setup_popup_menu(self):
+        self.pmenu = gtk.Menu()
+
+        self.pmenu_start = gtk.MenuItem("Start")
+        self.pmenu_start.connect("activate", self._on_task_start)
+        self.pmenu.append(self.pmenu_start)
+
+        self.pmenu_stop = gtk.MenuItem("Stop")
+        self.pmenu_stop.connect("activate", self._on_task_stop)
+        self.pmenu.append(self.pmenu_stop)
+
+        self.pmenu_edit = gtk.MenuItem("Edit")
+        self.pmenu_edit.connect("activate", self._on_task_edit)
+        self.pmenu.append(self.pmenu_edit)
+
+    def _on_popup_menu(self, widget, event):
+        if event.type == gtk.gdk.BUTTON_PRESS and event.button == 3:
+            self.pmenu.popup(None, None, None, event.button, event.time)
+
+    def _on_task_start(self, item):
+        print("Starting task %s ..." % self.selected_task_uuid)
+        subprocess.Popen(["task", self.selected_task_uuid, "start"]).wait()
+
+    def _on_task_stop(self, item):
+        print("Stopping task %s ..." % self.selected_task_uuid)
+        subprocess.Popen(["task", self.selected_task_uuid, "stop"]).wait()
+
+    def _on_task_edit(self, item):
+        self.on_activate_task(self.selected_task_uuid)
 
     def setup_controls(self):
         self.vbox = gtk.VBox(homogeneous=False, spacing=4)
@@ -42,6 +77,8 @@ class Dialog(gtk.Window):
         view = gtk.TreeView()
         view.set_model(model_filter)
         view.connect("row_activated", self._on_row_activated)
+        view.connect("cursor-changed", self._on_row_changed)
+        self.tv = view
 
         lcell = gtk.CellRendererText()
         lcell.set_property("xalign", 0.0)
@@ -90,6 +127,7 @@ class Dialog(gtk.Window):
         self.add_button.connect("clicked", self._on_add_clicked)
         self.close_button.connect("clicked", self._on_close)
         self.show_all_button.connect("clicked", self._on_show_all)
+        self.tv.connect("event", self._on_popup_menu)
         self.connect("delete_event", self._on_delete)
         self.connect("key-press-event", self._on_keypress)
 
@@ -155,6 +193,7 @@ class Dialog(gtk.Window):
         super(Dialog, self).show_all()
         self.present()
         self.grab_focus()
+        self.pmenu.show_all()
 
     def _on_delete(self, *args):
         """Instead of destroying the window on close, just hide it."""
@@ -165,8 +204,24 @@ class Dialog(gtk.Window):
         """Open a task editor dialog."""
         model = view.get_model()
         uuid = model[row][0]
-        # self.hide()
         self.on_activate_task(uuid)
+
+    def _on_row_changed(self, view):
+        selection = view.get_selection()
+        selection.set_mode(gtk.SELECTION_SINGLE)
+        tree_model, tree_iter = selection.get_selected()
+        self.selected_task_uuid = tree_model.get_value(tree_iter, 0)
+        print("Selected task %s" % self.selected_task_uuid,
+            file=sys.stderr)
+
+        for task in self.tasks:
+            if task["uuid"] == self.selected_task_uuid:
+                if task.is_active():
+                    self.pmenu_start.hide()
+                    self.pmenu_stop.show()
+                else:
+                    self.pmenu_start.show()
+                    self.pmenu_stop.hide()
 
     def _on_query_changed(self, ctl):
         """Handles the query change.  Stores the new query in self.query for
