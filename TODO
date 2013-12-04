@@ -1,6 +1,5 @@
 - Show last 10 modified tasks in a submenu.
-- Move project names to the right column in the indicator menu, like the date time applet does for time zones.  How is this done?
 - Open as many task properties dialogs as necessary.
-- Calculate urgency according to the man page.
+- Show exceptions using gtk.MessageDialog.
 
 Email suggestions to <hex@umonkey.net>, add "NoAgenda" to the subject line to bypass the spam filter.
