@@ -39,6 +39,7 @@ class Database(object):
             if line.startswith("data.location="):
                 folder = line.split("=", 1)[1].strip()
                 return os.path.join(folder, "pending.data")
+        raise RuntimeError("Could not find task database location.")
 
     def get_tasks(self):
         if self._tasks is None:

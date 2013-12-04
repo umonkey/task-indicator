@@ -1,3 +1,9 @@
+2013/12/05 (version 1.18)
+
+- Fixed a crash when there's no database.
+- Special tag "pin" replaced with "next".
+
+
 2013/11/27 (version 1.17)
 
 - Added a popup menu to start/stop tasks in the search dialog.

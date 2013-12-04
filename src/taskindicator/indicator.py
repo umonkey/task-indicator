@@ -145,7 +145,8 @@ class Checker(object):
 
     def task_sort(self, task):
         """Returns the data to sort tasks by."""
-        is_pinned = "pin" in task.get("tags", [])
+        tags = task.get("tags", [])
+        is_pinned = "next" in tags
         is_running = "start" in task
         is_endless = "endless" in task.get("tags", [])
         pri = {"H": 3, "M": 2, "L": 1}.get(task.get("priority"), 0)
