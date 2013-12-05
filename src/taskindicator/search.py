@@ -34,17 +34,17 @@ class Dialog(gtk.Window):
     def _setup_popup_menu(self):
         self.pmenu = gtk.Menu()
 
-        self.pmenu_start = gtk.MenuItem("Start")
-        self.pmenu_start.connect("activate", self._on_task_start)
-        self.pmenu.append(self.pmenu_start)
+        def add_item(label, handler):
+            item = gtk.MenuItem(label)
+            item.connect("activate", handler)
+            self.pmenu.append(item)
+            return item
 
-        self.pmenu_stop = gtk.MenuItem("Stop")
-        self.pmenu_stop.connect("activate", self._on_task_stop)
-        self.pmenu.append(self.pmenu_stop)
-
-        self.pmenu_edit = gtk.MenuItem("Edit")
-        self.pmenu_edit.connect("activate", self._on_task_edit)
-        self.pmenu.append(self.pmenu_edit)
+        self.pmenu_start = add_item("Start", self._on_task_start)
+        self.pmenu_stop = add_item("Stop", self._on_task_stop)
+        self.pmenu_edit = add_item("Edit", self._on_task_edit)
+        self.pmenu_done = add_item("Done", self._on_task_done)
+        self.pmenu_restart = add_item("Restart", self._on_task_restart)
 
     def _on_popup_menu(self, widget, event):
         if event.type == gtk.gdk.BUTTON_PRESS and event.button == 3:
@@ -60,6 +60,16 @@ class Dialog(gtk.Window):
 
     def _on_task_edit(self, item):
         self.on_activate_task(self.selected_task_uuid)
+
+    def _on_task_done(self, item):
+        print("Finishing task %s ..." % self.selected_task_uuid)
+        subprocess.Popen(["task", self.selected_task_uuid, "stop"]).wait()
+        subprocess.Popen(["task", self.selected_task_uuid, "done"]).wait()
+
+    def _on_task_restart(self, item):
+        print("Restarting task %s ..." % self.selected_task_uuid)
+        subprocess.Popen(["task", self.selected_task_uuid,
+            "mod", "status:pending"]).wait()
 
     def setup_controls(self):
         self.vbox = gtk.VBox(homogeneous=False, spacing=4)
@@ -214,7 +224,7 @@ class Dialog(gtk.Window):
         print("Selected task %s" % self.selected_task_uuid,
             file=sys.stderr)
 
-        for task in self.tasks:
+        for task in self.all_tasks:
             if task["uuid"] == self.selected_task_uuid:
                 if task.is_active():
                     self.pmenu_start.hide()
@@ -222,6 +232,13 @@ class Dialog(gtk.Window):
                 else:
                     self.pmenu_start.show()
                     self.pmenu_stop.hide()
+
+                if task["status"] == "pending":
+                    self.pmenu_done.show()
+                    self.pmenu_restart.hide()
+                else:
+                    self.pmenu_done.hide()
+                    self.pmenu_restart.show()
 
     def _on_query_changed(self, ctl):
         """Handles the query change.  Stores the new query in self.query for
