@@ -5,6 +5,7 @@ from __future__ import print_function
 import gtk
 import subprocess
 import sys
+import webbrowser
 
 from taskindicator import util
 from taskindicator.taskw import Task
@@ -16,6 +17,7 @@ class Dialog(gtk.Window):
         self.query = None
         self.tasks = None
         self.selected_task_uuid = None
+        self.selected_task = None
 
         self.setup_window()
         self.setup_controls()
@@ -45,6 +47,8 @@ class Dialog(gtk.Window):
         self.pmenu_edit = add_item("Edit", self._on_task_edit)
         self.pmenu_done = add_item("Done", self._on_task_done)
         self.pmenu_restart = add_item("Restart", self._on_task_restart)
+        self.pmenu_links = add_item(
+            "Open linked web page", self._on_task_links)
 
     def _on_popup_menu(self, widget, event):
         if event.type == gtk.gdk.BUTTON_PRESS and event.button == 3:
@@ -70,6 +74,12 @@ class Dialog(gtk.Window):
         print("Restarting task %s ..." % self.selected_task_uuid)
         subprocess.Popen(["task", self.selected_task_uuid,
             "mod", "status:pending"]).wait()
+
+    def _on_task_links(self, item):
+        if self.selected_task:
+            for part in self.selected_task["description"].split():
+                if "://" in part:
+                    webbrowser.open(part)
 
     def setup_controls(self):
         self.vbox = gtk.VBox(homogeneous=False, spacing=4)
@@ -224,8 +234,10 @@ class Dialog(gtk.Window):
         print("Selected task %s" % self.selected_task_uuid,
             file=sys.stderr)
 
+        self.selected_task = None
         for task in self.all_tasks:
             if task["uuid"] == self.selected_task_uuid:
+                self.selected_task = task
                 if task.is_active():
                     self.pmenu_start.hide()
                     self.pmenu_stop.show()
@@ -239,6 +251,11 @@ class Dialog(gtk.Window):
                 else:
                     self.pmenu_done.hide()
                     self.pmenu_restart.show()
+
+                if "://" in task["description"]:
+                    self.pmenu_links.show()
+                else:
+                    self.pmenu_links.hide()
 
     def _on_query_changed(self, ctl):
         """Handles the query change.  Stores the new query in self.query for
