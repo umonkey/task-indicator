@@ -155,15 +155,17 @@ class Dialog(gtk.Window):
         if self.query is None:
             return True
 
-        project = model.get_value(iter, 2)
-        if project and self.query in unicode(project, "utf-8").lower():
-            return True
+        parts = []
+        for field in (2, 3):
+            txt = unicode(model.get_value(iter, field), "utf-8")
+            parts.append(txt.lower())
+        fulltext = u" ".join(parts)
 
-        description = model.get_value(iter, 3)
-        if description and self.query in unicode(description, "utf-8").lower():
-            return True
+        for word in self.query.lower().split():
+            if word not in fulltext:
+                return False
 
-        return False
+        return True
 
     def cell_data(self, col, cell, model, iter, data=None):
         status = model[iter][1]
