@@ -157,8 +157,10 @@ class Dialog(gtk.Window):
 
         parts = []
         for field in (2, 3):
-            txt = unicode(model.get_value(iter, field), "utf-8")
-            parts.append(txt.lower())
+            raw = model.get_value(iter, field)
+            if raw:
+                txt = unicode(raw, "utf-8")
+                parts.append(txt.lower())
         fulltext = u" ".join(parts)
 
         for word in self.query.lower().split():
