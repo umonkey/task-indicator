@@ -86,8 +86,9 @@ class Task(dict):
         if isinstance(note, unicode):
             note = note.encode("utf-8")
 
-        folder = os.path.join(os.path.dirname(
-            get_database_folder()), "notes")
+        folder = os.path.join(
+            get_database_folder(),
+            "notes")
         if not os.path.exists(folder):
             os.makedirs(folder)
             log("Created folder {0}.".format(folder))
@@ -106,8 +107,10 @@ class Task(dict):
         if not self.get("uuid"):
             return None
 
-        fn = os.path.join(os.path.dirname(
-            get_database_folder()), "notes", self["uuid"])
+        fn = os.path.join(
+            get_database_folder(),
+            "notes",
+            self["uuid"])
         if os.path.exists(fn):
             with open(fn, "rb") as f:
                 return f.read().decode("utf-8")
