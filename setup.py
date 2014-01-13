@@ -56,5 +56,5 @@ setup(
     scripts = ['task-indicator'],
     url = 'http://umonkey.net/task-indicator/en/',
     download_url = 'http://code.umonkey.net/task-indicator/archive/default.zip',
-    version = '1.23'
+    version = '1.24'
 )

@@ -33,7 +33,7 @@ def strip_description(text):
         words = words[2:-2]
 
     # Strip shortened urls (used by bugwarrior, etc).
-    if len(words) > 1 and "http://" in words[-1]:
+    if len(words) > 1 and "://" in words[-1]:
         del words[-1]
         if words[-1] == "..":
             del words[-1]
