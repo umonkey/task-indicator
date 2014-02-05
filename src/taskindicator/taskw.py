@@ -157,6 +157,9 @@ class Tasks(object):
 
             task = Task()
             for kw in shlex.split(line[1:-1]):
+                if ":" not in kw:
+                    log("Warning: malformed database token: %s" % kw)
+                    continue
                 k, v = kw.split(":", 1)
                 v = v.replace("\/", "/")  # FIXME: must be a better way
                 v = v.decode("utf-8")

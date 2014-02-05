@@ -158,7 +158,7 @@ class Checker(object):
             "description": "", "priority": "M"})
 
     def on_pull_tasks(self, widget):
-        p = subprocess.Popen(["bugwarrior-pull"],
+        p = subprocess.Popen(["x-terminal-emulator", "-e", "bugwarrior-pull"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
 
