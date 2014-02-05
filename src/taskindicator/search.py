@@ -166,7 +166,7 @@ class Dialog(gtk.Window):
             return True
 
         parts = []
-        for field in (2, 7):
+        for field in (0, 2, 7):
             raw = model.get_value(iter, field)
             if raw:
                 txt = unicode(raw, "utf-8")

@@ -1,8 +1,9 @@
-2014/02/05 (version 1.25)
+2014/02/05 (version 1.26)
 
 - Search now searches within the whole description, not only stripped-out
   versions, which makes it possible to find tasks by URL, when they have
   some meaning (e.g., Jira includes remote project name sometimes).
+- Search now also searches uuids.
 
 
 2014/01/13 (version 1.24)
