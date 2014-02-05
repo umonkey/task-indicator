@@ -90,7 +90,17 @@ class Dialog(gtk.Window):
         self.vbox.pack_start(self.query_ctl, expand=False,
             fill=True, padding=4)
 
-        self.model = model = gtk.ListStore(str, str, str, str, str, str, bool)
+        self.model = model = gtk.ListStore(
+            str,   # 0 uuid
+            str,   # 1 status
+            str,   # 2 project
+            str,   # 3 clean description
+            str,   # 4 urgency
+            str,   # 5 priority
+            bool,  # 6 started?
+            str,   # 7 raw_description
+            )
+
         self.model_filter = model_filter = model.filter_new()
         model_filter.set_visible_func(self.filter_tasks)
 
@@ -156,7 +166,7 @@ class Dialog(gtk.Window):
             return True
 
         parts = []
-        for field in (2, 3):
+        for field in (2, 7):
             raw = model.get_value(iter, field)
             if raw:
                 txt = unicode(raw, "utf-8")
@@ -203,7 +213,8 @@ class Dialog(gtk.Window):
                   util.strip_description(task["description"]),
                   "%.1f" % float(task["urgency"]),
                   task.get("priority", "L"),
-                  not not task.get("start")]
+                  not not task.get("start"),
+                  task["description"]]
             self.model.append(row)
 
         title = "Search for tasks (%u)" % len(tasks)
