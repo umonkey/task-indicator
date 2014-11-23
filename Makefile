@@ -2,7 +2,7 @@ VERSION=1.28
 PYTHON=python
 
 test:
-	pep8 src/taskindicator/*.py
+	-pep8 src/taskindicator/*.py
 
 clean:
 	find . -regex '.*\.\(pyc\|orig\)$$' -delete
