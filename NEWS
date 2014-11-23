@@ -1,73 +1,51 @@
-2014/02/06 (version 1.27)
+2014/11/23 (version 1.28)
+- Added a tray icon for systems that don't have appindicator.
 
+2014/02/06 (version 1.27)
 - Better handling of unknown database contents.
 
-
 2014/02/05 (version 1.26)
-
 - Search now searches within the whole description, not only stripped-out
   versions, which makes it possible to find tasks by URL, when they have
   some meaning (e.g., Jira includes remote project name sometimes).
 - Search now also searches uuids.
 
-
 2014/01/13 (version 1.24)
-
 - Fixed stripping URLs from menu.
 
-
 2014/01/10 (version 1.23)
-
 - Fixed wrong notes folder.
 
-
 2014/01/09 (version 1.22)
-
 - Fixed a bug with tasks that have no project.
 
-
 2013/12/14 (version 1.21)
-
 - Improved the search window to require all entered words to be present
   in either project or description fields of a task.
 
-
 2013/12/05 (version 1.20)
-
 - Fixed a crash when there's no database.
 - Special tag "pin" replaced with "next".
 - Can now finish and restart tasks using the search window popup menu.
 - Can now open linked pages from the search window popup menu.
 
-
 2013/11/27 (version 1.17)
-
 - Added a popup menu to start/stop tasks in the search dialog.
 
-
 2013/11/15 (version 1.16)
-
 - Calling bugwarrior from menu no longer blocks the UI.
 
-
 2013/11/12 (version 1.15)
-
 - Active tasks are shown with bold font in the search dialog.
 
-
 2013/11/08 (version 1.14)
-
 - Long notes now have a vertical scroll-bar and don't extend
   the window vertically.
 
-
 2013/11/07 (version 1.13)
-
 - Use real task urgency, which tasks are now sorted by.
 
-
 2013/11/06 (version 1.12)
-
 - Fixed a bug with tasks that have no project assigned.
 - Strip trailing URLs from task descriptions.
 - Moved project name to the end of the menu item, and only show
@@ -76,54 +54,38 @@
 - Fixed an error when a task had no priority.
 - Database location is now requested from TaskWarrior, not hard-coded.
 
-
 2013/11/05 (version 1.8)
-
 - Fixed a bug in database parser error reporting.
 
-
 2013/10/31 (version 1.7)
-
 - Search window no longer closes when a task dialog is opened
   by double-clicking a table row.
 - The "Show all" checkbox in the search window is now named
   "show completed".
 - There's now an "Add" button in the search window.
 
-
 2013/10/28 (version 1.6)
-
 - License changed to MIT.
 - Fixed adding new tasks.
 - Fixed notes from last edited task showing up in the new task dialog.
 
-
 2013/10/23 (version 1.3)
-
 - Start/Stop buttons no longer reset current project.
 - Fixed parsing tags with taskw.
 - Support for task notes.
 
-
 2013/10/18
-
 - Start/Stop button no longer closes the properties dialog.
 - The taskw module now also reads completed and deleted tasks.
 - Fixed completed tasks being shown by default.
 
-
 2013/10/17
-
 - Added a new module taskw.py, which is a simple database parser.
 - Current task duration is shown in the properties dialog.
 - Sorting by urgency temporarily doesn't work.
 
-
 Version 1.2
-
 - Tasks tagged with "pin" are always show at the top of the indicator menu.
 
-
 Version 1.1
-
 - Tasks tagged as "endless" moved to the end of the indicator menu.

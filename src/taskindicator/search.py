@@ -174,7 +174,10 @@ class Dialog(gtk.Window):
         fulltext = u" ".join(parts)
 
         for word in self.query.lower().split():
-            if word not in fulltext:
+            if word.startswith("-"):
+                if word[1:] in fulltext:
+                    return False
+            elif word not in fulltext:
                 return False
 
         return True
