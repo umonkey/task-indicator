@@ -195,7 +195,7 @@ class GtkIndicator(BaseIndicator):
         def add_item(label, handler):
             item = gtk.MenuItem()
             item.set_label(label)
-            item.connect("activate", lambda *args: handler())
+            item.connect("activate", handler)
             item.show()
             self.menu.append(item)
             return item
@@ -214,10 +214,14 @@ class GtkIndicator(BaseIndicator):
         self.separator = gtk.SeparatorMenuItem()
         self.menu.append(self.separator)
 
-        add_item("Add new task...", self.on_add_task)
-        add_item("Search tasks...", self.on_toggle)
-        add_item("Stop all running tasks", self.on_stop_all)
-        add_item("Quit", self.on_quit)
+        add_item("Add new task...",
+            lambda *args: self.on_add_task())
+        add_item("Search tasks...",
+            lambda *args: self.on_toggle())
+        add_item("Stop all running tasks",
+            lambda *args: self.on_stop_all())
+        add_item("Quit",
+            lambda *args: self.on_quit())
 
     def on_menu(self, icon, button, click_time):
         self.menu.popup(None, None, gtk.status_icon_position_menu, button, click_time, self.icon)
@@ -303,19 +307,11 @@ class Checker(object):
         tasks = filter(lambda t: t["status"] == "pending",
                        self.database.get_tasks())
 
-        tasks = sorted(tasks, key=self.task_sort)
+        tasks = sorted(tasks,
+                       key=lambda t: t["modified"],
+                       reverse=True)
 
         self.indicator.set_tasks(tasks)
-
-    def task_sort(self, task):
-        """Returns the data to sort tasks by."""
-        tags = task.get("tags", [])
-        is_pinned = "next" in tags
-        is_running = "start" in task
-        is_endless = "endless" in task.get("tags", [])
-        pri = {"H": 3, "M": 2, "L": 1}.get(task.get("priority"), 0)
-        return (-is_running, -is_pinned, is_endless, -pri,
-            -float(task.get("urgency", 0)))
 
     def on_add_task(self):
         self.dialog.show_task({"uuid": None, "status": "pending",
@@ -388,7 +384,6 @@ class Checker(object):
         for task in self.database.get_tasks():
             if "start" in task:
                 util.run_command(["task", task["uuid"], "stop"])
-        self.stop_item.hide()
         self.update_status()
 
     def on_quit(self):

@@ -1,5 +1,10 @@
-2014/11/23 (version 1.28)
+2014/11/24 (version 1.30)
+- Changed sorting order of tasks in the tray menu: now showing
+  10 recent tasks, not most urgent.
+
+2014/11/23 (version 1.29)
 - Added a tray icon for systems that don't have appindicator.
+- Fixed menu items not working.
 
 2014/02/06 (version 1.27)
 - Better handling of unknown database contents.
