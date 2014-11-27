@@ -4,7 +4,7 @@
 from distutils.core import setup
 
 
-VERSION = "1.34"
+VERSION = "1.35"
 
 
 classifiers = [
@@ -26,17 +26,16 @@ current activity time, etc.  Supports task notes.
 
 For more complex operations CLI must be used.
 
-Indicator applet and menu screenshot:
+Feature summary:
 
-.. image:: http://umonkey.net/projects/task-indicator/menu.png
+- Tray icon, red when tasks are running.
+- Tray icon tooltip shows current activity time (near-icon label on Ubuntu).
+- Tray menu gives quick access to 10 recently changed tasks.
+- Tray menu item to quickly pull remote tasks (e.g., with bugwarrior).
+- Search dialog helps find tasks by description, project, labels etc.
+- Simple task editor to change description, priority, project and notes.
 
-Task editor:
-
-.. image:: http://umonkey.net/projects/task-indicator/info.png
-
-Search dialog:
-
-.. image:: http://umonkey.net/projects/task-indicator/search.png
+See `screenshots <http://umonkey.net/projects/task-indicator/index.en.html>`_.
 """
 
 data_files = [
