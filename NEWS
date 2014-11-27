@@ -1,5 +1,6 @@
-2014/11/27 (version 1.32)
+2014/11/27 (version 1.33)
 - Fixed menu behavior when using GtkStatusIcon.
+- Added icons to the tray menu.
 
 2014/11/24 (version 1.31)
 - Changed sorting order of tasks in the tray menu: now showing

@@ -50,6 +50,13 @@ def get_program_path(command):
 
 
 class BaseIndicator(object):
+    # http://www.pygtk.org/pygtk2reference/gtk-stock-items.html
+    ACTIVE_ICON = gtk.STOCK_MEDIA_PLAY
+
+    def __init__(self):
+        self.menu_icon = gtk.image_new_from_stock(self.ACTIVE_ICON,
+                                                  gtk.ICON_SIZE_MENU)
+
     def can_pull(self):
         return get_program_path("task-pull") != None
 
@@ -191,6 +198,8 @@ class UbuntuIndicator(BaseIndicator):
 
 class GtkIndicator(BaseIndicator):
     def __init__(self):
+        super(GtkIndicator, self).__init__()
+
         self.icon = gtk.StatusIcon()
         self.icon.set_from_icon_name("taskui")
         self.icon.connect("activate",
@@ -198,8 +207,11 @@ class GtkIndicator(BaseIndicator):
         self.icon.connect("popup-menu", self.on_menu)
         self.icon.set_tooltip("TaskWarrior")
 
-        def add_item(label, handler):
-            item = gtk.MenuItem()
+        def add_item(label, handler, icon=None):
+            if icon is None:
+                item = gtk.MenuItem()
+            else:
+                item = gtk.ImageMenuItem(icon)
             item.set_label(label)
             item.connect("activate", handler)
             item.show()
@@ -210,7 +222,7 @@ class GtkIndicator(BaseIndicator):
 
         self.task_items = []
         for x in range(10):
-            item = gtk.MenuItem()
+            item = gtk.ImageMenuItem()
             item.set_label("task placeholder")
             item.connect("activate",
                          lambda item: self.on_task_selected(item.get_data("task")))
@@ -221,16 +233,21 @@ class GtkIndicator(BaseIndicator):
         self.menu.append(self.separator)
 
         add_item("Add new task...",
-            lambda *args: self.on_add_task())
+            lambda *args: self.on_add_task(),
+            gtk.STOCK_NEW)
         add_item("Search tasks...",
-            lambda *args: self.on_toggle())
+            lambda *args: self.on_toggle(),
+            gtk.STOCK_FIND)
         add_item("Stop all running tasks",
-            lambda *args: self.on_stop_all())
+            lambda *args: self.on_stop_all(),
+            gtk.STOCK_STOP)
         if self.can_pull():
             add_item("Pull tasks",
-                lambda *args: self.on_pull())
+                lambda *args: self.on_pull(),
+                gtk.STOCK_REFRESH)
         add_item("Quit",
-            lambda *args: self.on_quit())
+            lambda *args: self.on_quit(),
+            gtk.STOCK_QUIT)
 
     def on_menu(self, icon, button, click_time):
         self.menu.popup(None, None, gtk.status_icon_position_menu, button, click_time, self.icon)
@@ -246,8 +263,10 @@ class GtkIndicator(BaseIndicator):
                 if task.is_active():
                     label = item.get_children()[0]
                     label.set_markup("<b>%s</b>" % desc)
+                    item.set_image(self.menu_icon)
                 else:
                     item.set_label(desc)
+                    item.set_image(None)
 
                 item.set_data("task", task)
                 item.show()
