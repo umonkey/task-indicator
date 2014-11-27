@@ -54,8 +54,96 @@ class BaseIndicator(object):
     ACTIVE_ICON = gtk.STOCK_MEDIA_PLAY
 
     def __init__(self):
+        self.stop_item = None
+        self.task_items = []
+
         self.menu_icon = gtk.image_new_from_stock(self.ACTIVE_ICON,
                                                   gtk.ICON_SIZE_MENU)
+
+        self.setup_menu()
+        self.setup_icon()
+
+    def setup_menu(self):
+        """
+        Setup the tray menu
+
+        Adds action menu items and task placeholders, which are later
+        replaced with real recently modified tasks (see set_tasks).
+        """
+        self.menu = gtk.Menu()
+
+        def add_item(label, handler, icon=None):
+            if icon is None:
+                item = gtk.MenuItem()
+            else:
+                item = gtk.ImageMenuItem(icon)
+            item.set_label(label)
+            item.connect("activate", handler)
+            item.show()
+            self.menu.append(item)
+            return item
+
+        self.task_items = []
+        for x in range(10):
+            item = gtk.ImageMenuItem()
+            item.set_label("task placeholder")
+            item.connect("activate",
+                         lambda item: self.on_task_selected(item.get_data("task")))
+            self.menu.append(item)
+            self.task_items.append(item)
+
+        self.separator = gtk.SeparatorMenuItem()
+        self.menu.append(self.separator)
+
+        add_item("Add new task...",
+            lambda *args: self.on_add_task(),
+            gtk.STOCK_NEW)
+        add_item("Search tasks...",
+            lambda *args: self.on_toggle(),
+            gtk.STOCK_FIND)
+        self.stop_item = add_item("Stop all running tasks",
+            lambda *args: self.on_stop_all(),
+            gtk.STOCK_STOP)
+        if self.can_pull():
+            add_item("Pull tasks",
+                lambda *args: self.on_pull(),
+                gtk.STOCK_REFRESH)
+        add_item("Quit",
+            lambda *args: self.on_quit(),
+            gtk.STOCK_QUIT)
+
+    def setup_icon(self):
+        log("WARNING: setup_icon not implimented")
+
+    def set_tasks(self, tasks):
+        """
+        Update tasks in the tray menu
+
+        Updates placeholder menu items with real data, proper icons and
+        visibility.
+        """
+        for idx, item in enumerate(self.task_items):
+            if idx > len(tasks):
+                item.hide()
+            else:
+                task = tasks[idx]
+                desc = util.strip_description(task["description"])
+
+                if task.is_active():
+                    label = item.get_children()[0]
+                    label.set_markup("<b>%s</b>" % desc)
+                    item.set_image(self.menu_icon)
+                else:
+                    item.set_label(desc)
+                    item.set_image(None)
+
+                item.set_data("task", task)
+                item.show()
+
+        if tasks:
+            self.separator.show()
+        else:
+            self.separator.hide()
 
     def can_pull(self):
         return get_program_path("task-pull") != None
@@ -89,81 +177,19 @@ class UbuntuIndicator(BaseIndicator):
     icon = "taskui"
     icon_attn = "taskui-active"
 
-    def __init__(self):
-        self.task_items = []
-
+    def setup_icon(self):
         self.indicator = appindicator.Indicator(self.appname,
             self.icon, appindicator.CATEGORY_APPLICATION_STATUS)
 
         icondir = os.getenv("TASK_INDICATOR_ICONDIR")
         if icondir:
             self.indicator.set_icon_theme_path(icondir)
-            print("Appindicator theme path: {0}, wanted: {1}".format(
-                self.indicator.get_icon_theme_path(), icondir))
+            # log("Appindicator theme path: {0}, wanted: {1}".format(self.indicator.get_icon_theme_path(), icondir))
 
         self.indicator.set_status(appindicator.STATUS_ACTIVE)
         self.indicator.set_attention_icon(self.icon_attn)
 
-        self.menu_setup()
         self.indicator.set_menu(self.menu)
-
-    def menu_setup(self):
-        self.menu = gtk.Menu()
-
-        def add_item(text, handler):
-            item = gtk.MenuItem(text)
-            item.connect("activate", handler)
-            item.show()
-            self.menu.append(item)
-            return item
-
-        self.add_task_item = add_item("Add new task...",
-                                      lambda *args: self.on_add_task())
-
-        self.show_all_item = add_item("Show more...",
-                                      lambda *args: self.on_toggle())
-
-        self.stop_item = add_item("Stop all running tasks", self.stop)
-        if self.can_pull():
-            self.bw_item = add_item("Pull tasks from outside",
-                self.on_pull_tasks)
-
-        self.quit_item = add_item("Quit", lambda *args: self.on_quit())
-
-    def set_tasks(self, tasks):
-        log("Updating menu contents.")
-
-        for item in self.menu.get_children():
-            if item.get_data("is_dynamic"):
-                self.menu.remove(item)
-        self.task_items = []
-
-        for task in tasks[:10]:
-            item = gtk.MenuItem(self.format_menu_label(task),
-                                     use_underline=False)
-            if task.get("start"):
-                item.set_active(True)
-            item.connect("activate", self.on_task_selected)
-            item.set_data("task", task)
-            item.set_data("is_dynamic", True)
-            item.show()
-
-            self.menu.insert(item, len(self.task_items))
-            self.task_items.append(item)
-
-        if data:
-            item = gtk.SeparatorMenuItem()
-            item.set_data("is_dynamic", True)
-            item.show()
-            self.menu.insert(item, len(self.task_items))
-            self.task_items.append(item)
-
-    def format_menu_label(self, task):
-        title = util.strip_description(task["description"])
-        if "project" in task:
-            title += u" [{0}]".format(
-                task["project"].split(".")[-1])
-        return title
 
     def set_idle(self):
         self.indicator.set_label("Idle")
@@ -197,9 +223,7 @@ class UbuntuIndicator(BaseIndicator):
 
 
 class GtkIndicator(BaseIndicator):
-    def __init__(self):
-        super(GtkIndicator, self).__init__()
-
+    def setup_icon(self):
         self.icon = gtk.StatusIcon()
         self.icon.set_from_icon_name("taskui")
         self.icon.connect("activate",
@@ -207,81 +231,17 @@ class GtkIndicator(BaseIndicator):
         self.icon.connect("popup-menu", self.on_menu)
         self.icon.set_tooltip("TaskWarrior")
 
-        def add_item(label, handler, icon=None):
-            if icon is None:
-                item = gtk.MenuItem()
-            else:
-                item = gtk.ImageMenuItem(icon)
-            item.set_label(label)
-            item.connect("activate", handler)
-            item.show()
-            self.menu.append(item)
-            return item
-
-        self.menu = gtk.Menu()
-
-        self.task_items = []
-        for x in range(10):
-            item = gtk.ImageMenuItem()
-            item.set_label("task placeholder")
-            item.connect("activate",
-                         lambda item: self.on_task_selected(item.get_data("task")))
-            self.menu.append(item)
-            self.task_items.append(item)
-
-        self.separator = gtk.SeparatorMenuItem()
-        self.menu.append(self.separator)
-
-        add_item("Add new task...",
-            lambda *args: self.on_add_task(),
-            gtk.STOCK_NEW)
-        add_item("Search tasks...",
-            lambda *args: self.on_toggle(),
-            gtk.STOCK_FIND)
-        add_item("Stop all running tasks",
-            lambda *args: self.on_stop_all(),
-            gtk.STOCK_STOP)
-        if self.can_pull():
-            add_item("Pull tasks",
-                lambda *args: self.on_pull(),
-                gtk.STOCK_REFRESH)
-        add_item("Quit",
-            lambda *args: self.on_quit(),
-            gtk.STOCK_QUIT)
-
     def on_menu(self, icon, button, click_time):
         self.menu.popup(None, None, gtk.status_icon_position_menu, button, click_time, self.icon)
-
-    def set_tasks(self, tasks):
-        for idx, item in enumerate(self.task_items):
-            if idx > len(tasks):
-                item.hide()
-            else:
-                task = tasks[idx]
-                desc = util.strip_description(task["description"])
-
-                if task.is_active():
-                    label = item.get_children()[0]
-                    label.set_markup("<b>%s</b>" % desc)
-                    item.set_image(self.menu_icon)
-                else:
-                    item.set_label(desc)
-                    item.set_image(None)
-
-                item.set_data("task", task)
-                item.show()
-
-        if tasks:
-            self.separator.show()
-        else:
-            self.separator.hide()
 
     def set_idle(self):
         self.icon.set_from_icon_name("taskui")
         self.icon.set_tooltip("No running tasks")
+        self.stop_item.hide()
 
     def set_running(self, count, duration):
         self.icon.set_from_icon_name("taskui-active")
+        self.stop_item.show()
 
         if count == 1:
             self.icon.set_tooltip("%s" % duration)

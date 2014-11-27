@@ -4,7 +4,7 @@
 from distutils.core import setup
 
 
-VERSION = "1.33"
+VERSION = "1.34"
 
 
 classifiers = [

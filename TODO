@@ -1,4 +1,3 @@
-- Show last 10 modified tasks in a submenu.
 - Open as many task properties dialogs as necessary.
 - Show exceptions using gtk.MessageDialog.
 
