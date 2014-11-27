@@ -57,9 +57,6 @@ class BaseIndicator(object):
         self.stop_item = None
         self.task_items = []
 
-        self.menu_icon = gtk.image_new_from_stock(self.ACTIVE_ICON,
-                                                  gtk.ICON_SIZE_MENU)
-
         self.setup_menu()
         self.setup_icon()
 
@@ -132,7 +129,10 @@ class BaseIndicator(object):
                 if task.is_active():
                     label = item.get_children()[0]
                     label.set_markup("<b>%s</b>" % desc)
-                    item.set_image(self.menu_icon)
+
+                    icon = gtk.image_new_from_stock(self.ACTIVE_ICON,
+                                                    gtk.ICON_SIZE_MENU)
+                    item.set_image(icon)
                 else:
                     item.set_label(desc)
                     item.set_image(None)

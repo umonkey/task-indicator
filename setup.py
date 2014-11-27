@@ -4,7 +4,7 @@
 from distutils.core import setup
 
 
-VERSION = "1.35"
+VERSION = "1.36"
 
 
 classifiers = [
@@ -24,8 +24,6 @@ longdesc = """A simple indicator application that helps do simple things with
 TaskWarrior, like finding and adding tasks, starting and stopping them, track
 current activity time, etc.  Supports task notes.
 
-For more complex operations CLI must be used.
-
 Feature summary:
 
 - Tray icon, red when tasks are running.
@@ -34,6 +32,8 @@ Feature summary:
 - Tray menu item to quickly pull remote tasks (e.g., with bugwarrior).
 - Search dialog helps find tasks by description, project, labels etc.
 - Simple task editor to change description, priority, project and notes.
+
+For more complex operations CLI must be used.
 
 See `screenshots <http://umonkey.net/projects/task-indicator/index.en.html>`_.
 """
