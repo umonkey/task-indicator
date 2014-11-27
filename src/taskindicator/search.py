@@ -165,6 +165,11 @@ class Dialog(gtk.Window):
         if self.query is None:
             return True
 
+        # always show running tasks
+        running = model[iter][6]
+        if running:
+            return True
+
         parts = []
         for field in (0, 2, 7):
             raw = model.get_value(iter, field)
@@ -224,8 +229,13 @@ class Dialog(gtk.Window):
         self.set_title(title)
 
     def task_sort_func(self, task):
+        # active tasksk are always first
+        active = -task.is_active()
+
+        # completed tasks are always last
         completed = task["status"] != "pending"
-        return (completed, -float(task["urgency"]))
+
+        return (active, completed, -float(task["urgency"]))
 
     def show_all(self):
         super(Dialog, self).show_all()
