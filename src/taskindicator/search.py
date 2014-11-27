@@ -240,8 +240,14 @@ class Dialog(gtk.Window):
     def show_all(self):
         super(Dialog, self).show_all()
         self.present()
-        self.grab_focus()
         self.pmenu.show_all()
+
+        def present():
+            self.present()
+            self.window.focus()
+            self.grab_focus()
+
+        gtk.idle_add(present)
 
     def _on_delete(self, *args):
         """Instead of destroying the window on close, just hide it."""

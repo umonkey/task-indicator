@@ -1,10 +1,11 @@
-2014/11/27 (version 1.37)
+2014/11/27 (version 1.38)
 - Fixed menu behavior when using GtkStatusIcon.
 - Added icons to the tray menu.
 - Use single menu code for both indicator types.
 - Updated package description.
 - Search dialog now shows active tasks first.
 - Search dialog now always shows active tasks, even when not matching the query.
+- Single instance mode, helps using system shortcuts.
 
 2014/11/24 (version 1.31)
 - Changed sorting order of tasks in the tray menu: now showing

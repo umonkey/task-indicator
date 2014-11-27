@@ -14,6 +14,7 @@ import dateutil.parser
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 import time
@@ -371,6 +372,12 @@ class Checker(object):
         """Enters the main program loop"""
         self.on_timer()
 
+        def handle(*args, **kwargs):
+            log("Got signal USR1, showing the search dialog.")
+            self.search_dialog.show_all()
+
+        signal.signal(signal.SIGUSR1, handle)
+
     def on_stop_all(self):
         """Stops running tasks"""
         for task in self.database.get_tasks():
@@ -422,7 +429,34 @@ class Checker(object):
         return "%u:%02u" % (hours, minutes)
 
 
+def show_existing_instance():
+    """
+    Open up the previous instance, if there is one.
+
+    FIXME: use dbus.
+    """
+    p = subprocess.Popen(["pgrep", "-f", "/task-indicator"],
+                         stdout=subprocess.PIPE)
+
+    out = p.communicate()[0]
+    for line in out.splitlines():
+        if line.strip().isdigit():
+            pid = int(line.strip())
+            if pid != os.getpid():
+                try:
+                    os.kill(pid, signal.SIGUSR1)
+                    log("Sent SIGUSR1 to process %u." % pid)
+                    return True
+                except Exception, e:
+                    log("Error sending SIGUSR1 to process %u: %s" % (pid, e))
+
+    return False
+
+
 def main():
+    if show_existing_instance():
+        return
+
     os.chdir("/")
 
     app = Checker()
