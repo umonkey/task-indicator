@@ -4,6 +4,9 @@
 from distutils.core import setup
 
 
+VERSION = "1.32"
+
+
 classifiers = [
     'Development Status :: 4 - Beta',
     'Environment :: X11 Applications :: GTK',
@@ -56,5 +59,5 @@ setup(
     scripts = ['task-indicator'],
     url = 'http://umonkey.net/task-indicator/en/',
     download_url = 'http://code.umonkey.net/task-indicator/archive/default.zip',
-    version = '1.30'
+    version = VERSION
 )

@@ -50,6 +50,9 @@ def get_program_path(command):
 
 
 class BaseIndicator(object):
+    def can_pull(self):
+        return get_program_path("task-pull") != None
+
     def on_quit(self):
         log("on_quit not handled")
 
@@ -63,7 +66,10 @@ class BaseIndicator(object):
         log("on_stop_all not handled")
 
     def on_task_selected(self, task):
-        log("on_task_selected not handler, %s" % task)
+        log("on_task_selected not handled, %s" % task)
+
+    def on_pull(self):
+        log("on_pull not handled")
 
 
 class UbuntuIndicator(BaseIndicator):
@@ -111,7 +117,7 @@ class UbuntuIndicator(BaseIndicator):
                                       lambda *args: self.on_toggle())
 
         self.stop_item = add_item("Stop all running tasks", self.stop)
-        if get_program_path("bugwarrior-pull"):
+        if self.can_pull():
             self.bw_item = add_item("Pull tasks from outside",
                 self.on_pull_tasks)
 
@@ -126,11 +132,11 @@ class UbuntuIndicator(BaseIndicator):
         self.task_items = []
 
         for task in tasks[:10]:
-            item = gtk.CheckMenuItem(self.format_menu_label(task),
+            item = gtk.MenuItem(self.format_menu_label(task),
                                      use_underline=False)
             if task.get("start"):
                 item.set_active(True)
-            item.connect("activate", self.on_task_toggle)
+            item.connect("activate", self.on_task_selected)
             item.set_data("task", task)
             item.set_data("is_dynamic", True)
             item.show()
@@ -204,7 +210,7 @@ class GtkIndicator(BaseIndicator):
 
         self.task_items = []
         for x in range(10):
-            item = gtk.CheckMenuItem()
+            item = gtk.MenuItem()
             item.set_label("task placeholder")
             item.connect("activate",
                          lambda item: self.on_task_selected(item.get_data("task")))
@@ -220,6 +226,9 @@ class GtkIndicator(BaseIndicator):
             lambda *args: self.on_toggle())
         add_item("Stop all running tasks",
             lambda *args: self.on_stop_all())
+        if self.can_pull():
+            add_item("Pull tasks",
+                lambda *args: self.on_pull())
         add_item("Quit",
             lambda *args: self.on_quit())
 
@@ -234,8 +243,12 @@ class GtkIndicator(BaseIndicator):
                 task = tasks[idx]
                 desc = util.strip_description(task["description"])
 
-                item.set_label(desc)
-                item.set_active(task.is_active())
+                if task.is_active():
+                    label = item.get_children()[0]
+                    label.set_markup("<b>%s</b>" % desc)
+                else:
+                    item.set_label(desc)
+
                 item.set_data("task", task)
                 item.show()
 
@@ -291,6 +304,7 @@ class Checker(object):
         self.indicator.on_toggle = self.on_toggle_search
         self.indicator.on_stop_all = self.on_stop_all
         self.indicator.on_quit = self.on_quit
+        self.indicator.on_pull = self.on_pull
         self.indicator.on_task_selected = self.on_task_selected
 
     def on_start_task(self, task):
@@ -302,8 +316,6 @@ class Checker(object):
         self.update_status()
 
     def menu_add_tasks(self):
-        print("Updating menu contents.", file=sys.stderr)
-
         tasks = filter(lambda t: t["status"] == "pending",
                        self.database.get_tasks())
 
@@ -317,8 +329,8 @@ class Checker(object):
         self.dialog.show_task({"uuid": None, "status": "pending",
             "description": "", "priority": "M"})
 
-    def on_pull_tasks(self, widget):
-        p = subprocess.Popen(["x-terminal-emulator", "-e", "bugwarrior-pull"],
+    def on_pull(self):
+        p = subprocess.Popen(["x-terminal-emulator", "-e", "task-pull"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
 
@@ -337,6 +349,7 @@ class Checker(object):
         self.dialog.show_task(task)
 
     def on_task_selected(self, task):
+        log("task selected: %s" % task)
         if task:
             self.dialog.show_task(task)
 
@@ -391,7 +404,7 @@ class Checker(object):
         sys.exit(0)
 
     def on_tasks_changed(self, tasks):
-        print("on_tasks_changed", file=sys.stderr)
+        log("on_tasks_changed")
         self.menu_add_tasks()
         self.search_dialog.refresh(self.database.get_tasks())
         self.dialog.refresh(self.database.get_tasks())

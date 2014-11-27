@@ -1,6 +1,10 @@
-2014/11/24 (version 1.30)
+2014/11/27 (version 1.32)
+- Fixed menu behavior when using GtkStatusIcon.
+
+2014/11/24 (version 1.31)
 - Changed sorting order of tasks in the tray menu: now showing
   10 recent tasks, not most urgent.
+- Can now pull tasks using Gtk status icon.
 
 2014/11/23 (version 1.29)
 - Added a tray icon for systems that don't have appindicator.
