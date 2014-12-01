@@ -239,7 +239,7 @@ class Dialog(gtk.Window):
         """Updates the start/stop button label according to the current task
         activity status.  If the task is running, then the label is "Stop" and
         the running time is displayed."""
-        if not self.task.get("uuid"):
+        if not self.task or not self.task.get("uuid"):
             label = "Add"
         elif self.task and "start" in self.task:
             dur = self.task.format_current_runtime()
@@ -264,7 +264,14 @@ class Dialog(gtk.Window):
 
         self.show_all()
         self.set_start_stop_label()
-        self.description.grab_focus()
+
+        def present():
+            self.present()
+            self.window.focus()
+            self.grab_focus()
+            self.description.grab_focus()
+
+        gtk.idle_add(present)
 
     def show_existing_task(self, task):
         print("Showing task {0} ...".format(task["uuid"]), file=sys.stderr)
@@ -324,8 +331,9 @@ class Dialog(gtk.Window):
             gtk.main_quit()
 
     def save_task_note(self):
-        text = self._get_note()
-        self.task.set_note(text)
+        if self.task:
+            text = self._get_note()
+            self.task.set_note(text)
 
     def _get_note(self):
         return self.notes.get_text()
@@ -336,6 +344,9 @@ class Dialog(gtk.Window):
 
     def get_task_updates(self, task):
         update = {}
+
+        if not self.task:
+            return update
 
         if task.get("uuid"):
             update["uuid"] = task["uuid"]

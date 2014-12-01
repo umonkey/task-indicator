@@ -380,10 +380,15 @@ class Checker(object):
 
     def on_stop_all(self):
         """Stops running tasks"""
-        for task in self.database.get_tasks():
-            if "start" in task:
-                util.run_command(["task", task["uuid"], "stop"])
-        self.update_status()
+        self.indicator.set_idle()
+
+        def timer():
+            for task in self.database.get_tasks():
+                if "start" in task:
+                    util.run_command(["task", task["uuid"], "stop"])
+            self.update_status()
+
+        gtk.idle_add(timer)
 
     def on_quit(self):
         """Ends the applet"""
