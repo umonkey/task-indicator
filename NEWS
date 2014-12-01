@@ -1,5 +1,6 @@
-2014/12/01 (version 1.39)
+2014/12/01 (version 1.40)
 - Fixed task properties popping up when not expected.
+- Focus on the query bar when the search window pops up.
 
 2014/11/27 (version 1.38)
 - Fixed menu behavior when using GtkStatusIcon.

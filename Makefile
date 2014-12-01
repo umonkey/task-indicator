@@ -1,4 +1,4 @@
-VERSION=1.39
+VERSION=1.40
 PYTHON=python
 
 test:

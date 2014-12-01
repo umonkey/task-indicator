@@ -246,6 +246,7 @@ class Dialog(gtk.Window):
             self.present()
             self.window.focus()
             self.grab_focus()
+            self.query_ctl.grab_focus()
 
         gtk.idle_add(present)
 
