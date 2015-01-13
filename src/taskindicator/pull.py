@@ -92,5 +92,4 @@ class ProcessRunner(gtk.Window):
         self.tv.get_buffer().insert_at_cursor(text)
 
     def on_close_clicked(self):
-        print "closing pull window"
         self.destroy()
