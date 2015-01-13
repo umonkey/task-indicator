@@ -30,8 +30,7 @@ except ImportError:
     HAVE_APPINDICATOR = False
 
 from taskindicator import database
-from taskindicator import properties
-from taskindicator import search
+from taskindicator import dialogs
 from taskindicator import taskw
 from taskindicator import util
 from taskindicator.pull import ProcessRunner
@@ -264,11 +263,11 @@ class Checker(object):
 
         self.database = database.Database(callback=self.on_tasks_changed)
 
-        self.dialog = properties.Dialog(callback=self.on_task_info_closed)
+        self.dialog = dialogs.Properties(callback=self.on_task_info_closed)
         self.dialog.on_task_start = self.on_start_task
         self.dialog.on_task_stop = self.on_stop_task
 
-        self.search_dialog = search.Dialog()
+        self.search_dialog = dialogs.Search()
         self.search_dialog.on_activate_task = self.on_search_callback
 
         self.database.start_polling()
