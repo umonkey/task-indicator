@@ -11,9 +11,7 @@ import subprocess
 import sys
 import time
 
-
-def log(message):
-    print(message, file=sys.stderr)
+from taskindicator import util
 
 
 def get_database_folder():
@@ -91,17 +89,17 @@ class Task(dict):
             "notes")
         if not os.path.exists(folder):
             os.makedirs(folder)
-            log("Created folder {0}.".format(folder))
+            util.log("Created folder {0}.", folder)
 
         fn = os.path.join(folder, self["uuid"])
 
         if note.strip():
             with open(fn, "wb") as f:
                 f.write(note)
-                log("Wrote a note to {0}".format(fn))
+                util.log("Wrote a note to {0}", fn)
         elif os.path.exists(fn):
             os.unlink(fn)
-            log("Deleted a note file {0}".format(fn))
+            util.log("Deleted a note file {0}", fn)
 
     def get_note(self):
         if not self.get("uuid"):
@@ -143,7 +141,7 @@ class Tasks(object):
         _start = time.time()
 
         if not os.path.exists(database):
-            log("Database {0} does not exist.".format(database))
+            util.log("Database {0} does not exist.", database)
             return {}
 
         with open(database, "rb") as f:
@@ -158,7 +156,7 @@ class Tasks(object):
             task = Task()
             for kw in shlex.split(line[1:-1]):
                 if ":" not in kw:
-                    log("Warning: malformed database token: %s" % kw)
+                    util.log("Warning: malformed database token: {0}", kw)
                     continue
                 k, v = kw.split(":", 1)
                 v = v.replace("\/", "/")  # FIXME: must be a better way
@@ -171,7 +169,7 @@ class Tasks(object):
 
         tasks = self.merge_exported(tasks)
 
-        log("Task database read in {0} seconds.".format(time.time() - _start))
+        util.log("Task database read in {0} seconds.", time.time() - _start)
 
         return tasks
 
@@ -188,8 +186,7 @@ class Tasks(object):
 
         for idx, task in enumerate(tasks):
             if task["uuid"] not in _tasks:
-                log("Warning: task {0} not exported by TaskWarrior.".format(
-                    task["uuid"]))
+                util.log("Warning: task {0} not exported by TaskWarrior.", task["uuid"])
                 continue
 
             _task = _tasks[task["uuid"]]

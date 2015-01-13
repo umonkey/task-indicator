@@ -267,8 +267,7 @@ class Search(gtk.Window):
         selection.set_mode(gtk.SELECTION_SINGLE)
         tree_model, tree_iter = selection.get_selected()
         self.selected_task_uuid = tree_model.get_value(tree_iter, 0)
-        print("Selected task %s" % self.selected_task_uuid,
-            file=sys.stderr)
+        util.log("Selected task {0}", self.selected_task_uuid)
 
         self.selected_task = None
         for task in self.all_tasks:
@@ -314,10 +313,10 @@ class Search(gtk.Window):
 
     def on_activate_task(self, uuid):
         if uuid is None:
-            print("Activate new task dialog", file=sys.stderr)
+            util.log("Activate new task dialog")
             task = Task()
         else:
-            print("Activate task {0}".format(uuid), file=sys.stderr)
+            util.log("Activate task {0}", uuid)
             task = util.get_task_info(uuid)
 
         Properties.show_task(task)
@@ -459,7 +458,7 @@ class Properties(gtk.Window):
         gtk.idle_add(present)
 
     def show_existing_task(self, task):
-        print("Showing task {0} ...".format(task["uuid"]), file=sys.stderr)
+        util.log("Showing task {0} ...", task["uuid"])
 
         self.uuid.set_text(task["uuid"])
         self.description.set_text(task["description"])
@@ -476,7 +475,7 @@ class Properties(gtk.Window):
             self.start.set_label("Start")
 
     def show_new_task(self, task):
-        print("Showing new task dialog...", file=sys.stderr)
+        util.log("Showing new task dialog...")
 
         self.uuid.set_text("")
         self.description.set_text("")
@@ -543,8 +542,7 @@ class Properties(gtk.Window):
 
             for _taskno in re.findall("Created task (\d+)", output):
                 uuid = util.run_command(["task", _taskno, "uuid"]).strip()
-                print("New task uuid: {0}".format(uuid),
-                    file=sys.stderr)
+                util.log("New task uuid: {0}", uuid)
                 break
 
     def save_task_note(self):
@@ -626,9 +624,9 @@ class Properties(gtk.Window):
     def on_task_add(self, task):
         updates = self.get_task_updates(task)
         if not updates:
-            print("new task not added: no changes.", file=sys.stderr)
+            util.log("new task not added: no changes.")
         else:
-            print("new task: {0}".format(updates), file=sys.stderr)
+            util.log("new task: {0}", updates)
             uuid = self.callback(updates)
             if not isinstance(uuid, str):
                 raise RuntimeError("Task editor callback must return an uuid.")
@@ -638,13 +636,11 @@ class Properties(gtk.Window):
                 self.uuid.set_text(uuid)
 
     def on_task_start(self, task):
-        print("task {0} start".format(self.task["uuid"]),
-            file=sys.stderr)
+        util.log("task {0} start", self.task["uuid"])
         if task.get("uuid"):
             util.run_command(["task", task["uuid"], "start"])
 
     def on_task_stop(self, task):
-        print("task {0} stop".format(self.task["uuid"]),
-            file=sys.stderr)
+        util.log("task {0} stop", self.task["uuid"])
         if task.get("uuid"):
             util.run_command(["task", task["uuid"], "stop"])

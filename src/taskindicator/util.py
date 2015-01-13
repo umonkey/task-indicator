@@ -15,9 +15,14 @@ import gtk
 from taskindicator import taskw
 
 
+def log(msg, *args):
+    if args:
+        msg = msg.format(args)
+    print(msg, file=sys.stderr)
+
+
 def run_command(command):
-    print("> {0}".format(" ".join(command),
-        file=sys.stderr))
+    log("> {0}", " ".join(command))
     p = subprocess.Popen(command, stdout=subprocess.PIPE)
     return p.communicate()[0]
 
@@ -46,12 +51,10 @@ def get_icon_path(icon_name):
 
     icon = theme.lookup_icon(icon_name, 0, 0)
     if icon:
-        print("Found icon {0}: {1}".format(icon_name,
-            icon.get_filename()), file=sys.stderr)
+        log("Found icon {0}: {1}", icon_name, icon.get_filename())
         return icon.get_filename()
 
-    print("No icon named {0}".format(icon_name),
-        file=sys.stderr)
+    log("No icon named {0}", icon_name)
 
 
 def get_task_info(uuid):

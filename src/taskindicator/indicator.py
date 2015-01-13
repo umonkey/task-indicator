@@ -39,10 +39,6 @@ from taskindicator.pull import ProcessRunner
 FREQUENCY = 1  # seconds
 
 
-def log(msg):
-    print(msg, file=sys.stderr)
-
-
 def get_program_path(command):
     for path in os.getenv("PATH").split(os.pathsep):
         full = os.path.join(path, command)
@@ -111,7 +107,7 @@ class BaseIndicator(object):
             gtk.STOCK_QUIT)
 
     def setup_icon(self):
-        log("WARNING: setup_icon not implimented")
+        util.log("WARNING: setup_icon not implimented")
 
     def set_tasks(self, tasks):
         """
@@ -150,22 +146,22 @@ class BaseIndicator(object):
         return get_program_path("task-pull") != None
 
     def on_quit(self):
-        log("on_quit not handled")
+        util.log("on_quit not handled")
 
     def on_toggle(self):
-        log("on_toggle not handled")
+        util.log("on_toggle not handled")
 
     def on_add_task(self):
-        log("on_add_task not handled")
+        util.log("on_add_task not handled")
 
     def on_stop_all(self):
-        log("on_stop_all not handled")
+        util.log("on_stop_all not handled")
 
     def on_task_selected(self, task):
-        log("on_task_selected not handled, %s" % task)
+        util.log("on_task_selected not handled, %s" % task)
 
     def on_pull(self):
-        log("on_pull not handled")
+        util.log("on_pull not handled")
 
 
 class UbuntuIndicator(BaseIndicator):
@@ -185,7 +181,7 @@ class UbuntuIndicator(BaseIndicator):
         icondir = os.getenv("TASK_INDICATOR_ICONDIR")
         if icondir:
             self.indicator.set_icon_theme_path(icondir)
-            # log("Appindicator theme path: {0}, wanted: {1}".format(self.indicator.get_icon_theme_path(), icondir))
+            # util.log("Appindicator theme path: {0}, wanted: {1}".format(self.indicator.get_icon_theme_path(), icondir))
 
         self.indicator.set_status(appindicator.STATUS_ACTIVE)
         self.indicator.set_attention_icon(self.icon_attn)
@@ -207,7 +203,7 @@ class UbuntuIndicator(BaseIndicator):
     @classmethod
     def is_available(cls):
         if not HAVE_APPINDICATOR:
-            log("No appindicator package.")
+            util.log("No appindicator package.")
             return False  # not installed
 
         user = os.getenv("USER")
@@ -217,7 +213,7 @@ class UbuntuIndicator(BaseIndicator):
         out = p.communicate()[0]
 
         if out.strip() == "":
-            log("User %s has no indicator-applet running." % user)
+            util.log("User %s has no indicator-applet running." % user)
             return False  # not running
 
         return True
@@ -269,10 +265,10 @@ class Checker(object):
 
     def setup_indicator(self):
         if UbuntuIndicator.is_available():
-            log("AppIndicator is available, using it.")
+            util.log("AppIndicator is available, using it.")
             self.indicator = UbuntuIndicator()
         else:
-            log("AppIndicator is not available, using Gtk status icon.")
+            util.log("AppIndicator is not available, using Gtk status icon.")
             self.indicator = GtkIndicator()
 
         self.indicator.on_add_task = self.on_add_task
@@ -308,7 +304,7 @@ class Checker(object):
             self.search_dialog.show_all()
 
     def on_task_selected(self, task):
-        log("task selected: %s" % task)
+        util.log("task selected: %s" % task)
         if task:
             dialogs.Properties.show_task(task)
 
@@ -317,7 +313,7 @@ class Checker(object):
         self.on_timer()
 
         def handle(*args, **kwargs):
-            log("Got signal USR1, showing the search dialog.")
+            util.log("Got signal USR1, showing the search dialog.")
             self.search_dialog.show_all()
 
         signal.signal(signal.SIGUSR1, handle)
@@ -339,7 +335,7 @@ class Checker(object):
         sys.exit(0)
 
     def on_tasks_changed(self, tasks):
-        log("on_tasks_changed")
+        util.log("on_tasks_changed")
         self.menu_add_tasks()
         self.search_dialog.refresh(self.database.get_tasks())
 
@@ -393,10 +389,10 @@ def show_existing_instance():
             if pid != os.getpid():
                 try:
                     os.kill(pid, signal.SIGUSR1)
-                    log("Sent SIGUSR1 to process %u." % pid)
+                    util.log("Sent SIGUSR1 to process %u." % pid)
                     return True
                 except Exception, e:
-                    log("Error sending SIGUSR1 to process %u: %s" % (pid, e))
+                    util.log("Error sending SIGUSR1 to process %u: %s" % (pid, e))
 
     return False
 

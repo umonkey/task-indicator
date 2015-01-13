@@ -1,7 +1,5 @@
 # encoding=utf-8
 
-from __future__ import print_function
-
 import gtk
 import os
 import shlex
@@ -28,7 +26,7 @@ class Database(object):
         """Returns True if the file was updated since last check."""
         mtime = os.stat(self.filename).st_mtime
         if mtime != self.mtime:
-            print("Task database file modified.", file=sys.stderr)
+            util.log("Task database file modified.")
             self._tasks = None
             self.mtime = mtime
             return True
@@ -43,7 +41,7 @@ class Database(object):
 
     def get_tasks(self):
         if self._tasks is None:
-            print("Reloading tasks.", file=sys.stderr)
+            util.log("Reloading tasks.")
             self._tasks = self.load_tasks()
         return self._tasks
 
