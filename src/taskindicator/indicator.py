@@ -34,6 +34,7 @@ from taskindicator import properties
 from taskindicator import search
 from taskindicator import taskw
 from taskindicator import util
+from taskindicator.pull import ProcessRunner
 
 
 FREQUENCY = 1  # seconds
@@ -310,9 +311,7 @@ class Checker(object):
             "description": "", "priority": "M"})
 
     def on_pull(self):
-        p = subprocess.Popen(["x-terminal-emulator", "-e", "task-pull"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
+        ProcessRunner.run(["task-pull"])
 
     def on_toggle_search(self, *args):
         if self.search_dialog.get_property("visible"):
