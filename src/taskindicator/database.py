@@ -3,7 +3,6 @@
 import gtk
 import os
 import shlex
-import sys
 
 from taskindicator import util
 

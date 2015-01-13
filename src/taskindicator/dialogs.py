@@ -3,7 +3,6 @@
 from __future__ import print_function
 
 import gtk
-import sys
 import time
 import webbrowser
 

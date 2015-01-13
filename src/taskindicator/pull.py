@@ -8,7 +8,6 @@ import gtk
 import os
 import pango
 import subprocess
-import sys
 
 
 class ProcessRunner(gtk.Window):

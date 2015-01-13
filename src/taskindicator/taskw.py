@@ -8,7 +8,6 @@ import logging
 import os
 import shlex
 import subprocess
-import sys
 import time
 
 from taskindicator import util
@@ -205,18 +204,6 @@ class Tasks(object):
 
     def __len__(self):
         return len(self.tasks)
-
-
-if __name__ == "__main__":
-    import sys
-    uuids = sys.argv[1:]
-    for task in Tasks():
-        if uuids and task["uuid"] not in uuids:
-            continue
-        print(task)
-        if "start" in task or task["uuid"] in uuids:
-            for k, v in sorted(task.items()):
-                print("  {0}: {1}".format(k, unicode(v).encode("utf-8")))
 
 
 __all__ = ["Task", "Tasks"]
