@@ -263,12 +263,7 @@ class Checker(object):
 
         self.database = database.Database(callback=self.on_tasks_changed)
 
-        self.dialog = dialogs.Properties(callback=self.on_task_info_closed)
-        self.dialog.on_task_start = self.on_start_task
-        self.dialog.on_task_stop = self.on_stop_task
-
         self.search_dialog = dialogs.Search()
-        self.search_dialog.on_activate_task = self.on_search_callback
 
         self.database.start_polling()
 
@@ -287,14 +282,6 @@ class Checker(object):
         self.indicator.on_pull = self.on_pull
         self.indicator.on_task_selected = self.on_task_selected
 
-    def on_start_task(self, task):
-        util.run_command(["task", task["uuid"], "start"])
-        self.update_status()
-
-    def on_stop_task(self, task):
-        util.run_command(["task", task["uuid"], "stop"])
-        self.update_status()
-
     def menu_add_tasks(self):
         tasks = filter(lambda t: t["status"] == "pending",
                        self.database.get_tasks())
@@ -306,8 +293,10 @@ class Checker(object):
         self.indicator.set_tasks(tasks)
 
     def on_add_task(self):
-        self.dialog.show_task({"uuid": None, "status": "pending",
-            "description": "", "priority": "M"})
+        dialogs.Properties.show_task({"uuid": None,
+                                      "status": "pending",
+                                      "description": "",
+                                      "priority": "M"})
 
     def on_pull(self):
         ProcessRunner.run(["task-pull"])
@@ -318,53 +307,10 @@ class Checker(object):
         else:
             self.search_dialog.show_all()
 
-    def on_search_callback(self, uuid):
-        """Called when opening a task in the search window."""
-        if uuid is None:
-            task = taskw.Task()
-        else:
-            task = util.get_task_info(uuid)
-        self.dialog.show_task(task)
-
     def on_task_selected(self, task):
         log("task selected: %s" % task)
         if task:
-            self.dialog.show_task(task)
-
-    def on_task_info_closed(self, updates):
-        """Updates the task when the task info window is closed.  Updates
-        is a dictionary with 'uuid' and modified fields."""
-        if "uuid" in updates:
-            uuid = updates["uuid"]
-            del updates["uuid"]
-        else:
-            uuid = None
-
-        if uuid:
-            command = ["task", uuid, "mod"]
-        else:
-            command = ["task", "add"]
-
-        if updates:
-            for k, v in updates.items():
-                if k == "tags":
-                    for tag in v:
-                        if tag.strip():
-                            command.append(tag)
-                elif k == "description":
-                    command.append(v)
-                else:
-                    command.append("{0}:{1}".format(k, v))
-            output = util.run_command(command)
-
-            for _taskno in re.findall("Created task (\d+)", output):
-                uuid = util.run_command(["task", _taskno, "uuid"]).strip()
-                print("New task uuid: {0}".format(uuid),
-                    file=sys.stderr)
-                break
-
-        self.update_status()
-        return uuid
+            dialogs.Properties.show_task(task)
 
     def main(self):
         """Enters the main program loop"""
@@ -396,7 +342,6 @@ class Checker(object):
         log("on_tasks_changed")
         self.menu_add_tasks()
         self.search_dialog.refresh(self.database.get_tasks())
-        self.dialog.refresh(self.database.get_tasks())
 
     def on_timer(self):
         """Timer handler which updates the list of tasks and the status."""

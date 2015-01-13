@@ -3,8 +3,8 @@
 from __future__ import print_function
 
 import gtk
-import subprocess
 import sys
+import time
 import webbrowser
 
 from taskindicator import util
@@ -57,24 +57,24 @@ class Search(gtk.Window):
 
     def _on_task_start(self, item):
         print("Starting task %s ..." % self.selected_task_uuid)
-        subprocess.Popen(["task", self.selected_task_uuid, "start"]).wait()
+        util.run_command(["task", self.selected_task_uuid, "start"])
 
     def _on_task_stop(self, item):
         print("Stopping task %s ..." % self.selected_task_uuid)
-        subprocess.Popen(["task", self.selected_task_uuid, "stop"]).wait()
+        util.run_command(["task", self.selected_task_uuid, "stop"])
 
     def _on_task_edit(self, item):
         self.on_activate_task(self.selected_task_uuid)
 
     def _on_task_done(self, item):
         print("Finishing task %s ..." % self.selected_task_uuid)
-        subprocess.Popen(["task", self.selected_task_uuid, "stop"]).wait()
-        subprocess.Popen(["task", self.selected_task_uuid, "done"]).wait()
+        util.run_command(["task", self.selected_task_uuid, "stop"])
+        util.run_command(["task", self.selected_task_uuid, "done"])
 
     def _on_task_restart(self, item):
         print("Restarting task %s ..." % self.selected_task_uuid)
-        subprocess.Popen(["task", self.selected_task_uuid,
-            "mod", "status:pending"]).wait()
+        util.run_command(["task", self.selected_task_uuid,
+            "mod", "status:pending"])
 
     def _on_task_links(self, item):
         if self.selected_task:
@@ -313,19 +313,24 @@ class Search(gtk.Window):
             self.hide()
 
     def on_activate_task(self, uuid):
-        print("Activate task {0}".format(uuid),
-            file=sys.stderr)
+        if uuid is None:
+            print("Activate new task dialog", file=sys.stderr)
+            task = Task()
+        else:
+            print("Activate task {0}".format(uuid), file=sys.stderr)
+            task = util.get_task_info(uuid)
+
+        Properties.show_task(task)
 
 
 class Properties(gtk.Window):
-    def __init__(self, callback=None, debug=False):
+    def __init__(self, debug=False):
         super(Properties, self).__init__()
         self.connect("delete_event", self.on_delete_event)
         self.connect("key-press-event", self._on_keypress)
 
         self.debug = debug
         self.task = None
-        self.callback = callback
 
         self.set_border_width(10)
 
@@ -426,28 +431,30 @@ class Properties(gtk.Window):
             label = "Start"
         self.start.set_label(label)
 
-    def show_task(self, task):
+    @classmethod
+    def show_task(cls, task):
         """Opens the task editor dialog (new if no uuid)."""
         if isinstance(task, dict):
             task = Task(task)
         elif not isinstance(task, dict):
             raise ValueError("task must be a dict or a taskw.Task")
 
-        self.task = task
+        dlg = cls()
+        dlg.task = task
 
         if task.get("uuid"):
-            self.show_existing_task(task)
+            dlg.show_existing_task(task)
         else:
-            self.show_new_task(task)
+            dlg.show_new_task(task)
 
-        self.show_all()
-        self.set_start_stop_label()
+        dlg.show_all()
+        dlg.set_start_stop_label()
 
         def present():
-            self.present()
-            self.window.focus()
-            self.grab_focus()
-            self.description.grab_focus()
+            dlg.present()
+            dlg.window.focus()
+            dlg.grab_focus()
+            dlg.description.grab_focus()
 
         gtk.idle_add(present)
 
@@ -500,13 +507,45 @@ class Properties(gtk.Window):
         self.hide()
 
         self.save_task_note()
-        if self.callback:
-            updates = self.get_task_updates(self.task)
-            if updates and updates.get("uuid"):
-                self.callback(updates)
+
+        updates = self.get_task_updates(self.task)
+        if updates and updates.get("uuid"):
+            self.update_task(updates)
 
         if self.debug:
             gtk.main_quit()
+
+    def update_task(self, updates):
+        """Updates the task when the task info window is closed.  Updates
+        is a dictionary with 'uuid' and modified fields."""
+        if "uuid" in updates:
+            uuid = updates["uuid"]
+            del updates["uuid"]
+        else:
+            uuid = None
+
+        if uuid:
+            command = ["task", uuid, "mod"]
+        else:
+            command = ["task", "add"]
+
+        if updates:
+            for k, v in updates.items():
+                if k == "tags":
+                    for tag in v:
+                        if tag.strip():
+                            command.append(tag)
+                elif k == "description":
+                    command.append(v)
+                else:
+                    command.append("{0}:{1}".format(k, v))
+            output = util.run_command(command)
+
+            for _taskno in re.findall("Created task (\d+)", output):
+                uuid = util.run_command(["task", _taskno, "uuid"]).strip()
+                print("New task uuid: {0}".format(uuid),
+                    file=sys.stderr)
+                break
 
     def save_task_note(self):
         if self.task:
@@ -601,7 +640,11 @@ class Properties(gtk.Window):
     def on_task_start(self, task):
         print("task {0} start".format(self.task["uuid"]),
             file=sys.stderr)
+        if task.get("uuid"):
+            util.run_command(["task", task["uuid"], "start"])
 
     def on_task_stop(self, task):
         print("task {0} stop".format(self.task["uuid"]),
             file=sys.stderr)
+        if task.get("uuid"):
+            util.run_command(["task", task["uuid"], "stop"])

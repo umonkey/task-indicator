@@ -1,3 +1,8 @@
+2015/01/14
+- Moved all dialogs to dialogs.py.
+- Moved extended controls to controls.py.
+- Can now open multiple task properties and new task windows.
+
 2014/12/02 (version 1.41)
 - Pulling tasks in a GUI window, not terminal.
 
