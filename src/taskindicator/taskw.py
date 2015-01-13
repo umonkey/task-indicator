@@ -4,22 +4,15 @@
 from __future__ import print_function
 
 import json
-import logging
 import os
 import shlex
-import subprocess
 import time
 
 from taskindicator import util
 
 
 def get_database_folder():
-    p = subprocess.Popen(["task", "_show"],
-        stdout=subprocess.PIPE)
-    out, err = p.communicate()
-
-    if p.returncode:
-        raise RuntimeError("Could not read TaskWarrior config.")
+    out = util.run_command(["task", "_show"])
 
     for line in out.split("\n"):
         if line.startswith("data.location="):
@@ -175,9 +168,7 @@ class Tasks(object):
     def merge_exported(self, tasks):
         """Merges data reported by task.  This is primarily used to get real
         urgency, maybe something else in the future."""
-        p = subprocess.Popen(["task", "rc.json.array=1", "export"],
-            stdout=subprocess.PIPE)
-        out, err = p.communicate()
+        out = util.run_command(["task", "rc.json.array=1", "export"])
 
         _tasks = {}
         for em in json.loads(out):

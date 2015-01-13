@@ -24,7 +24,10 @@ def log(msg, *args):
 def run_command(command):
     log("> {0}", " ".join(command))
     p = subprocess.Popen(command, stdout=subprocess.PIPE)
-    return p.communicate()[0]
+    out = p.communicate()[0]
+    if p.returncode:
+        raise RuntimeError("Command failed with code %s." % p.returncode)
+    return out
 
 
 def find_tasks(args):
