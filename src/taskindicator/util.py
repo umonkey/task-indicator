@@ -12,12 +12,10 @@ import pygtk
 pygtk.require("2.0")
 import gtk
 
-from taskindicator import taskw
-
 
 def log(msg, *args):
     if args:
-        msg = msg.format(args)
+        msg = msg.format(*args)
     print(msg, file=sys.stderr)
 
 
@@ -31,7 +29,8 @@ def run_command(command):
 
 
 def find_tasks(args):
-    return taskw.Tasks()
+    from taskw import Tasks
+    return Tasks()
 
 
 def strip_description(text):
@@ -61,7 +60,8 @@ def get_icon_path(icon_name):
 
 
 def get_task_info(uuid):
-    return taskw.Tasks()[uuid]
+    from taskw import Tasks
+    return Tasks()[uuid]
 
 
 class UTC(datetime.tzinfo):
