@@ -56,19 +56,30 @@ class Search(gtk.Window):
             self.pmenu.popup(None, None, None, event.button, event.time)
 
     def _on_task_start(self, item):
+        self.set_task_active(True)
         self.database.start_task(self.selected_task_uuid)
 
     def _on_task_stop(self, item):
+        self.set_task_active(False)
         self.database.stop_task(self.selected_task_uuid)
 
     def _on_task_edit(self, item):
         self.on_activate_task(self.selected_task_uuid)
 
     def _on_task_done(self, item):
+        self.set_task_active(False, "completed")
         self.database.finish_task(self.selected_task_uuid)
 
     def _on_task_restart(self, item):
+        self.set_task_active(True)
         self.database.restart_task(self.selected_task_uuid)
+
+    def set_task_active(self, active, status=None):
+        for row in self.model:
+            if row[0] == self.selected_task_uuid:
+                row[6] = active
+                if status is not None:
+                    row[1] = status
 
     def _on_task_links(self, item):
         if self.selected_task:
