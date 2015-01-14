@@ -190,6 +190,7 @@ class Database(object):
                 return  # no changes
             duration = ts - int(last["ts"])
             cur.execute("UPDATE changes SET duration = ? WHERE id = ?", (duration, last["id"]))
+            util.log("Task {0} spent {1} seconds in status {2}, switching to {3}.", task_id, duration, last["status"], status)
 
         cur.execute("UPDATE tasks SET modified = ?, status = ? WHERE id = ?", (ts, status, task_id))
         cur.execute("INSERT INTO changes (task_id, ts, status) VALUES (?, ?, ?)", (task_id, ts, status))
