@@ -45,7 +45,7 @@ class Search(gtk.Window):
 
         self.pmenu_start = add_item("Start", self._on_task_start)
         self.pmenu_stop = add_item("Stop", self._on_task_stop)
-        self.pmenu_edit = add_item("Edit", self._on_task_edit)
+        self.pmenu_edit = add_item("Edit...", self._on_task_edit)
         self.pmenu_done = add_item("Done", self._on_task_done)
         self.pmenu_restart = add_item("Restart", self._on_task_restart)
         self.pmenu_links = add_item(
@@ -286,23 +286,31 @@ class Search(gtk.Window):
             for task in self.all_tasks:
                 if str(task.id()) == self.selected_task_id:
                     self.selected_task = task
-                    if task.is_active():
-                        self.pmenu_start.hide()
-                        self.pmenu_stop.show()
-                    else:
-                        self.pmenu_start.show()
-                        self.pmenu_stop.hide()
+
+                    self.pmenu_edit.show()
 
                     if task.is_closed():
+                        self.pmenu_start.hide()
+                        self.pmenu_stop.hide()
                         self.pmenu_done.hide()
                         self.pmenu_restart.show()
-                    else:
+                        self.pmenu_links.show()
+
+                    elif task.is_active():
+                        self.pmenu_start.hide()
+                        self.pmenu_stop.show()
                         self.pmenu_done.show()
                         self.pmenu_restart.hide()
-
-                    if "://" in task.get_summary():
                         self.pmenu_links.show()
-                    else:
+
+                    else:  # pending
+                        self.pmenu_start.show()
+                        self.pmenu_stop.hide()
+                        self.pmenu_done.show()
+                        self.pmenu_restart.hide()
+                        self.pmenu_links.show()
+
+                    if "://" not in task.get_summary():
                         self.pmenu_links.hide()
 
     def _on_query_changed(self, ctl):
