@@ -13,6 +13,19 @@ from taskindicator import util
 FREQUENCY = 1
 
 
+def save_note(task_id, note):
+    if isinstance(note, unicode):
+        note = note.encode("utf-8")
+
+    folder = os.path.expanduser("~/.task/notes")
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
+    path = os.path.join(folder, task_id)
+    with open(path, "wb") as f:
+        f.write(note)
+
+
 def get_database_folder():
     out = util.run_command(["task", "_show"])
 
@@ -42,10 +55,19 @@ class Task(dict):
             return self.get("tags", [])
         return super(Task, self).get(key, None)
 
+    def id(self):
+        return self["uuid"]
+
     def is_active(self):
         if not self.get("start"):
             return False
         return True
+
+    def set_active(self, active):
+        if active:
+            self["start"] = int(time.time())
+        elif "start" in self:
+            del self["start"]
 
     def get_current_runtime(self):
         if not self.get("start"):
@@ -63,37 +85,6 @@ class Task(dict):
         hours = (duration / 3600) % 60
 
         return "%u:%02u:%02u" % (hours, minutes, seconds)
-
-    def set_note(self, note):
-        if not self.get("uuid"):
-            raise RuntimeError(
-                "Cannot set a note for an unsaved task (no uuid).")
-
-        if not isinstance(note, (str, unicode)):
-            raise ValueError("Note must be a text string.")
-
-        if note == self.get_note():
-            return
-
-        if isinstance(note, unicode):
-            note = note.encode("utf-8")
-
-        folder = os.path.join(
-            get_database_folder(),
-            "notes")
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-            util.log("Created folder {0}.", folder)
-
-        fn = os.path.join(folder, self["uuid"])
-
-        if note.strip():
-            with open(fn, "wb") as f:
-                f.write(note)
-                util.log("Wrote a note to {0}", fn)
-        elif os.path.exists(fn):
-            os.unlink(fn)
-            util.log("Deleted a note file {0}", fn)
 
     def get_note(self):
         if not self.get("uuid"):
@@ -268,8 +259,7 @@ class Database(object):
             elif k == "description":
                 command.append(v)
             elif k == "note":
-                task = Task(uuid=task_id)
-                task.set_note(v)
+                save_note(task_id, v)
             else:
                 command.append("{0}:{1}".format(k, v))
 
@@ -289,4 +279,18 @@ class Database(object):
         for _taskno in re.findall("Created task (\d+)", output):
             uuid = util.run_command(["task", _taskno, "uuid"]).strip()
             util.log("New task uuid: {0}", uuid)
+            save_note(uuid, properties.get("description", ""))
             return uuid
+
+    def update_task(self, task_id, properties):
+        command = ["task", task_id, "mod"]
+
+        for k, v in properties.items():
+            if k in ("project", "priority"):
+                command.append("%s:%s" % (k, v))
+            elif k == "summary":
+                command.append(v)
+            elif k == "description":
+                save_note(task_id, v)
+
+        util.run_command(command)

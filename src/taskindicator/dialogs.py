@@ -381,12 +381,6 @@ class New(TaskDialog):
         self.priority = Priority()
         add_control(self.priority, "Priority:")
 
-        """
-        row += 1
-        self.tags = Tags()
-        add_control(self.tags, "Tags:")
-        """
-
         row += 1
         self.notes = NoteEditor()
         add_control(self.notes, "Description:", vexpand=True)
@@ -422,21 +416,19 @@ class New(TaskDialog):
     def on_save(self, widget):
         self.database.add_task({
             "summary": self.description.get_text(),
-            #"description": self.notes.get_text(),  # FIXME: see database.add_task
+            "description": self.notes.get_text(),
             "project": self.project.get_text(),
             "priority": self.priority.get_text(),
-            #"tags": self.tags.get_tags(),
         })
         self.destroy()
 
 
 class Properties(gtk.Window):
-    def __init__(self, database, debug=False):
+    def __init__(self, database):
         super(Properties, self).__init__()
-        #self.connect("delete_event", self.on_delete_event)
+        self.connect("delete_event", self.on_delete_event)
 
         self.database = database
-        self.debug = debug
         self.task = None
 
         self.set_border_width(10)
@@ -462,11 +454,11 @@ class Properties(gtk.Window):
         row = 0
         self.uuid = gtk.Entry()
         self.uuid.set_property("editable", False)
-        add_control(self.uuid, "UUID:")
+        add_control(self.uuid, "Task id:")
 
         row += 1
         self.description = gtk.Entry()
-        add_control(self.description, "Description:")
+        add_control(self.description, "Summary:")
 
         row += 1
         self.project = Project()
@@ -478,16 +470,8 @@ class Properties(gtk.Window):
         add_control(self.priority, "Priority:")
 
         row += 1
-        self.wait_date = gtk.Entry()
-        add_control(self.wait_date, "Wait until:")
-
-        row += 1
-        self.tags = Tags()
-        add_control(self.tags, "Tags:")
-
-        row += 1
         self.notes = NoteEditor()
-        add_control(self.notes, "Notes:", vexpand=True)
+        add_control(self.notes, "Description:", vexpand=True)
 
         row += 1
         self.completed = gtk.CheckButton("completed")
@@ -544,22 +528,9 @@ class Properties(gtk.Window):
         """Opens the task editor dialog (new if no uuid)."""
         dlg = cls(database)
         dlg.task = task
-
-        if task.get("uuid"):
-            dlg.show_existing_task(task)
-        else:
-            dlg.show_new_task(task)
-
+        dlg.show_existing_task(task)
         dlg.show_all()
         dlg.set_start_stop_label()
-
-        def present():
-            dlg.present()
-            dlg.window.focus()
-            dlg.grab_focus()
-            dlg.description.grab_focus()
-
-        gtk.idle_add(present)
 
     def show_existing_task(self, task):
         util.log("Showing task {0} ...", task["uuid"])
@@ -568,7 +539,6 @@ class Properties(gtk.Window):
         self.description.set_text(task["description"])
         self.project.set_text(task["project"])
         self.priority.set_text(task["priority"])
-        self.tags.set_text(", ".join(task["tags"]))
         self.notes.set_text(task.get_note())
 
         self.completed.set_active(task["status"] == "completed")
@@ -578,37 +548,23 @@ class Properties(gtk.Window):
         else:
             self.start.set_label("Start")
 
-    def show_new_task(self, task):
-        util.log("Showing new task dialog...")
-
-        self.uuid.set_text("")
-        self.description.set_text("")
-        self.project.set_text("")
-        self.priority.set_text("M")
-        self.tags.set_text("")
-        self.completed.set_active(False)
-        self.notes.set_text("")
-
-        self.description.grab_focus()
-
-        self.start.set_label("Add")
-
     def _on_browse(self, widget):
         for word in self.task["description"].split(" "):
             if "://" in word:
                 webbrowser.open(word)
 
     def on_close(self, widget):
-        self.hide()
+        self.database.update_task(self.task.id(), {
+            "summary": self.description.get_text(),
+            "project": self.project.get_text(),
+            "priority": self.priority.get_text(),
+            "description": self.notes.get_text(),
+        })
 
-        self.save_task_note()
+        if self.completed.get_active():
+            self.database.finish_task(self.task.id())
 
-        updates = self.get_task_updates(self.task)
-        if updates and updates.get("uuid"):
-            self.update_task(updates)
-
-        if self.debug:
-            gtk.main_quit()
+        self.destroy()
 
     def update_task(self, updates):
         """
@@ -620,88 +576,15 @@ class Properties(gtk.Window):
         else:
             self.database.add_task(updates)
 
-    def save_task_note(self):
-        if self.task:
-            text = self.notes.get_text()
-            self.task.set_note(text)
-
-    def get_task_updates(self, task):
-        update = {}
-
-        if not self.task:
-            return update
-
-        if task.get("uuid"):
-            update["uuid"] = task["uuid"]
-
-        tmp = self.description.get_text()
-        if tmp is not None and tmp != self.task.get("description"):
-            update["description"] = tmp
-
-        tmp = self.project.get_text()
-        if tmp is not None and tmp != self.task.get("project"):
-            update["project"] = tmp
-
-        tmp = self.priority.get_text()
-        if tmp is not None and tmp != self.task.get("priority"):
-            update["priority"] = tmp
-
-        tmp = self.wait_date.get_text()
-        if tmp and tmp != self.task.get("wait"):
-            pass
-
-        tmp = "completed" if self.completed.get_active() else "pending"
-        if tmp is not None and tmp != self.task.get("status"):
-            update["status"] = tmp
-
-        tmp = self.tags.get_tags()
-        old_tags = self.task["tags"]
-        if tmp is not None and tmp != old_tags:
-            update["tags"] = []
-            for k in old_tags:
-                if k not in tmp:
-                    update["tags"].append("-" + k)
-            for k in tmp:
-                if k not in old_tags:
-                    update["tags"].append("+" + k)
-
-        return update
-
     def on_delete_event(self, widget, event, data=None):
         self.on_close(widget)
         return True
 
     def on_start_stop(self, widget):
-        if not self.task.get("uuid"):
-            self.on_task_add(self.task)
-        elif "start" in self.task:
-            self.on_task_stop(self.task)
-            del self.task["start"]
+        if self.task.is_active():
+            self.database.stop_task(self.task.id())
+            self.task.set_active(False)
         else:
-            self.on_task_start(self.task)
-            self.task["start"] = int(time.time())
-        # self.on_close(widget)
-
-    def on_task_add(self, task):
-        updates = self.get_task_updates(task)
-        if not updates:
-            util.log("new task not added: no changes.")
-        else:
-            util.log("new task: {0}", updates)
-            uuid = self.callback(updates)
-            if not isinstance(uuid, str):
-                raise RuntimeError("Task editor callback must return an uuid.")
-
-            if not self.task["uuid"]:
-                self.task["uuid"] = uuid
-                self.uuid.set_text(uuid)
-
-    def on_task_start(self, task):
-        util.log("task {0} start", self.task["uuid"])
-        if task.get("uuid"):
-            self.database.start_task(task["uuid"])
-
-    def on_task_stop(self, task):
-        util.log("task {0} stop", self.task["uuid"])
-        if task.get("uuid"):
-            self.database.stop_task(task["uuid"])
+            self.database.start_task(self.task.id())
+            self.task.set_active(True)
+        self.set_start_stop_label()
