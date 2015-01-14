@@ -28,11 +28,6 @@ def run_command(command):
     return out
 
 
-def find_tasks(args):
-    from taskw import Tasks
-    return Tasks()
-
-
 def strip_description(text):
     words = text.split(" ")
 
@@ -57,11 +52,6 @@ def get_icon_path(icon_name):
         return icon.get_filename()
 
     log("No icon named {0}", icon_name)
-
-
-def get_task_info(uuid):
-    from taskw import Tasks
-    return Tasks()[uuid]
 
 
 class UTC(datetime.tzinfo):

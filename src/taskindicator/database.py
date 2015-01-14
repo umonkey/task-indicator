@@ -18,18 +18,8 @@ class Database(object):
 
         self.callback = callback
 
-    def start_polling(self):
-        self._on_timeout()
-
-    def poll(self):
-        """Returns True if the file was updated since last check."""
-        mtime = os.stat(self.filename).st_mtime
-        if mtime != self.mtime:
-            util.log("Task database file modified.")
-            self._tasks = None
-            self.mtime = mtime
-            return True
-        return False
+    def modified_since(self, ts):
+        return os.stat(self.filename).st_mtime > ts
 
     def get_filename(self):
         for line in util.run_command(["task", "_show"]).split("\n"):
@@ -44,9 +34,14 @@ class Database(object):
             self._tasks = self.load_tasks()
         return self._tasks
 
+    def refresh(self):
+        self._tasks = None
+        return self.get_tasks()
+
     def load_tasks(self):
-        f = self.get_task_filter()
-        return util.find_tasks(f)
+        from taskw import Tasks
+        # f = self.get_task_filter()
+        return Tasks()
 
     def get_task_filter(self):
         config = os.path.expanduser("~/.taskui-filter")
@@ -55,7 +50,24 @@ class Database(object):
         with open(config, "rb") as f:
             return shlex.split(f.read().strip())
 
-    def _on_timeout(self):
-        gtk.timeout_add(FREQUENCY * 1000, self._on_timeout)
-        if self.poll() and self.callback:
-            self.callback(self.get_tasks())
+    def get_task_info(self, task_id):
+        from taskw import Tasks
+        return Tasks()[task_id]
+
+    def start_task(self, task_id):
+        util.log("Starting task {0}.", task_id)
+        util.run_command(["task", task_id, "start"])
+
+    def stop_task(self, task_id):
+        util.log("Stopping task {0}.", task_id)
+        util.run_command(["task", task_id, "stop"])
+
+    def finish_task(self, task_id):
+        util.log("Finishing task {0}.", task_id)
+        util.run_command(["task", task_id, "stop"])
+        util.run_command(["task", task_id, "done"])
+
+    def restart_task(self, task_id):
+        util.log("Restarting task {0}.", task_id)
+        util.run_command(["task", task_id, "mod", "status:pending"])
+        util.run_command(["task", task_id, "start"])

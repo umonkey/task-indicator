@@ -12,8 +12,10 @@ from taskindicator.taskw import Task
 
 
 class Search(gtk.Window):
-    def __init__(self, parent=None):
+    def __init__(self, database, parent=None):
         super(Search, self).__init__()
+
+        self.database = database
         self.query = None
         self.tasks = None
         self.selected_task_uuid = None
@@ -55,25 +57,19 @@ class Search(gtk.Window):
             self.pmenu.popup(None, None, None, event.button, event.time)
 
     def _on_task_start(self, item):
-        print("Starting task %s ..." % self.selected_task_uuid)
-        util.run_command(["task", self.selected_task_uuid, "start"])
+        self.database.start_task(self.selected_task_uuid)
 
     def _on_task_stop(self, item):
-        print("Stopping task %s ..." % self.selected_task_uuid)
-        util.run_command(["task", self.selected_task_uuid, "stop"])
+        self.database.stop_task(self.selected_task_uuid)
 
     def _on_task_edit(self, item):
         self.on_activate_task(self.selected_task_uuid)
 
     def _on_task_done(self, item):
-        print("Finishing task %s ..." % self.selected_task_uuid)
-        util.run_command(["task", self.selected_task_uuid, "stop"])
-        util.run_command(["task", self.selected_task_uuid, "done"])
+        self.database.finish_task(self.selected_task_uuid)
 
     def _on_task_restart(self, item):
-        print("Restarting task %s ..." % self.selected_task_uuid)
-        util.run_command(["task", self.selected_task_uuid,
-            "mod", "status:pending"])
+        self.database.restart_task(self.selected_task_uuid)
 
     def _on_task_links(self, item):
         if self.selected_task:
@@ -200,9 +196,12 @@ class Search(gtk.Window):
         else:
             cell.set_property("weight", 400)
 
-    def refresh(self, tasks):
-        """Updates the task list with the new tasks.  Also reloads the full
-        task list, to show when the corresponding checkbox is checked."""
+    def refresh(self):
+        """
+        Updates the task list with the new tasks.  Also reloads the full task
+        list, to show when the corresponding checkbox is checked.
+        """
+        tasks = self.database.get_tasks()
         self.tasks = [t for t in tasks if t["status"] == "pending"]
         self.all_tasks = [t for t in tasks if t["status"] != "deleted"]
         self.refresh_table()
@@ -316,17 +315,18 @@ class Search(gtk.Window):
             task = Task()
         else:
             util.log("Activate task {0}", uuid)
-            task = util.get_task_info(uuid)
+            task = self.database.get_task_info(uuid)
 
-        Properties.show_task(task)
+        Properties.show_task(self.database, task)
 
 
 class Properties(gtk.Window):
-    def __init__(self, debug=False):
+    def __init__(self, database, debug=False):
         super(Properties, self).__init__()
         self.connect("delete_event", self.on_delete_event)
         self.connect("key-press-event", self._on_keypress)
 
+        self.database = database
         self.debug = debug
         self.task = None
 
@@ -430,14 +430,14 @@ class Properties(gtk.Window):
         self.start.set_label(label)
 
     @classmethod
-    def show_task(cls, task):
+    def show_task(cls, database, task):
         """Opens the task editor dialog (new if no uuid)."""
         if isinstance(task, dict):
             task = Task(task)
         elif not isinstance(task, dict):
             raise ValueError("task must be a dict or a taskw.Task")
 
-        dlg = cls()
+        dlg = cls(database)
         dlg.task = task
 
         if task.get("uuid"):
@@ -637,9 +637,9 @@ class Properties(gtk.Window):
     def on_task_start(self, task):
         util.log("task {0} start", self.task["uuid"])
         if task.get("uuid"):
-            util.run_command(["task", task["uuid"], "start"])
+            self.database.start_task(task["uuid"])
 
     def on_task_stop(self, task):
         util.log("task {0} stop", self.task["uuid"])
         if task.get("uuid"):
-            util.run_command(["task", task["uuid"], "stop"])
+            self.database.stop_task(task["uuid"])

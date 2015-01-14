@@ -258,10 +258,9 @@ class Checker(object):
         self.setup_indicator()
 
         self.database = database.Database(callback=self.on_tasks_changed)
+        self.database_ts = 0
 
-        self.search_dialog = dialogs.Search()
-
-        self.database.start_polling()
+        self.search_dialog = dialogs.Search(self.database)
 
     def setup_indicator(self):
         if UbuntuIndicator.is_available():
@@ -289,7 +288,8 @@ class Checker(object):
         self.indicator.set_tasks(tasks)
 
     def on_add_task(self):
-        dialogs.Properties.show_task({"uuid": None,
+        dialogs.Properties.show_task(self.database,
+                                     {"uuid": None,
                                       "status": "pending",
                                       "description": "",
                                       "priority": "M"})
@@ -306,7 +306,7 @@ class Checker(object):
     def on_task_selected(self, task):
         util.log("task selected: %s" % task)
         if task:
-            dialogs.Properties.show_task(task)
+            dialogs.Properties.show_task(self.database, task)
 
     def main(self):
         """Enters the main program loop"""
@@ -326,7 +326,6 @@ class Checker(object):
             for task in self.database.get_tasks():
                 if "start" in task:
                     util.run_command(["task", task["uuid"], "stop"])
-            self.update_status()
 
         gtk.idle_add(timer)
 
@@ -342,7 +341,12 @@ class Checker(object):
     def on_timer(self):
         """Timer handler which updates the list of tasks and the status."""
         gtk.timeout_add(FREQUENCY * 1000, self.on_timer)
-        self.update_status()  # display current duration, etc
+
+        if self.database.modified_since(self.database_ts):
+            self.database.refresh()
+            self.search_dialog.refresh()
+            self.update_status()
+            self.database_ts = int(time.time())
 
     def update_status(self):
         """Changes the indicator icon and text label according to running
