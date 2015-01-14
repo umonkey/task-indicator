@@ -458,7 +458,7 @@ class Properties(gtk.Window):
         self.project.set_text(task["project"])
         self.priority.set_text(task["priority"])
         self.tags.set_text(", ".join(task["tags"]))
-        self._set_note(task.get_note())
+        self.notes.set_text(task.get_note())
 
         self.completed.set_active(task["status"] == "completed")
 
@@ -476,7 +476,7 @@ class Properties(gtk.Window):
         self.priority.set_text("M")
         self.tags.set_text("")
         self.completed.set_active(False)
-        self._set_note("")
+        self.notes.set_text("")
 
         self.description.grab_focus()
 
@@ -500,47 +500,19 @@ class Properties(gtk.Window):
             gtk.main_quit()
 
     def update_task(self, updates):
-        """Updates the task when the task info window is closed.  Updates
-        is a dictionary with 'uuid' and modified fields."""
-        if "uuid" in updates:
-            uuid = updates["uuid"]
-            del updates["uuid"]
+        """
+        Updates the task when the task info window is closed.
+        Updates is a dictionary with 'uuid' and modified fields.
+        """
+        if updates.get("uuid"):
+            self.database.update_task(updates["uuid"], updates)
         else:
-            uuid = None
-
-        if uuid:
-            command = ["task", uuid, "mod"]
-        else:
-            command = ["task", "add"]
-
-        if updates:
-            for k, v in updates.items():
-                if k == "tags":
-                    for tag in v:
-                        if tag.strip():
-                            command.append(tag)
-                elif k == "description":
-                    command.append(v)
-                else:
-                    command.append("{0}:{1}".format(k, v))
-            output = util.run_command(command)
-
-            for _taskno in re.findall("Created task (\d+)", output):
-                uuid = util.run_command(["task", _taskno, "uuid"]).strip()
-                util.log("New task uuid: {0}", uuid)
-                break
+            self.database.add_task(updates)
 
     def save_task_note(self):
         if self.task:
-            text = self._get_note()
+            text = self.notes.get_text()
             self.task.set_note(text)
-
-    def _get_note(self):
-        return self.notes.get_text()
-
-    def _set_note(self, text):
-        """Changes the contents of the note editor."""
-        self.notes.set_text(text)
 
     def get_task_updates(self, task):
         update = {}

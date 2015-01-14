@@ -3,6 +3,7 @@
 import gtk
 import json
 import os
+import re
 import shlex
 import time
 
@@ -253,3 +254,45 @@ class Database(object):
         util.log("Restarting task {0}.", task_id)
         util.run_command(["task", task_id, "mod", "status:pending"])
         util.run_command(["task", task_id, "start"])
+
+    def update_task(self, task_id, properties):
+        command = ["task", task_id, "mod"]
+
+        for k, v in properties.items():
+            if k == "uuid":
+                continue
+            if k == "tags":
+                for tag in v:
+                    if tag.strip():
+                        command.append(tag)
+            elif k == "description":
+                command.append(v)
+            elif k == "note":
+                task = Task(uuid=task_id)
+                task.set_note(v)
+            else:
+                command.append("{0}:{1}".format(k, v))
+
+            util.run_command(command)
+
+    def add_task(self, properties):
+        command = ["task", "add"]
+
+        for k, v in properties.items():
+            if k == "uuid":
+                continue
+            if k == "tags":
+                for tag in v:
+                    if tag.strip():
+                        command.append(tag)
+            elif k == "description":
+                command.append(v)
+            else:
+                command.append("{0}:{1}".format(k, v))
+
+            output = util.run_command(command)
+
+            for _taskno in re.findall("Created task (\d+)", output):
+                uuid = util.run_command(["task", _taskno, "uuid"]).strip()
+                util.log("New task uuid: {0}", uuid)
+                return uuid
