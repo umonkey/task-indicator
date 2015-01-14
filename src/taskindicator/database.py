@@ -44,15 +44,7 @@ class Database(object):
 
     def load_tasks(self):
         from taskw import Tasks
-        # f = self.get_task_filter()
         return Tasks()
-
-    def get_task_filter(self):
-        config = os.path.expanduser("~/.taskui-filter")
-        if not os.path.exists(config):
-            return ["status:pending", "or", "start.not:"]
-        with open(config, "rb") as f:
-            return shlex.split(f.read().strip())
 
     def get_task_info(self, task_id):
         from taskw import Tasks
