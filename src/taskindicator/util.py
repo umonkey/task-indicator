@@ -29,6 +29,9 @@ def run_command(command, fail=True):
 
 
 def strip_description(text):
+    if not text:
+        return ""
+
     words = text.split(" ")
 
     if text.startswith("(bw)"):

@@ -17,7 +17,7 @@ class Search(gtk.Window):
         self.database = database
         self.query = None
         self.tasks = None
-        self.selected_task_uuid = None
+        self.selected_task_id = None
         self.selected_task = None
 
         self.setup_window()
@@ -57,26 +57,26 @@ class Search(gtk.Window):
 
     def _on_task_start(self, item):
         self.set_task_active(True)
-        self.database.start_task(self.selected_task_uuid)
+        self.database.start_task(self.selected_task_id)
 
     def _on_task_stop(self, item):
         self.set_task_active(False)
-        self.database.stop_task(self.selected_task_uuid)
+        self.database.stop_task(self.selected_task_id)
 
     def _on_task_edit(self, item):
-        self.on_activate_task(self.selected_task_uuid)
+        self.on_activate_task(self.selected_task_id)
 
     def _on_task_done(self, item):
         self.set_task_active(False, "completed")
-        self.database.finish_task(self.selected_task_uuid)
+        self.database.finish_task(self.selected_task_id)
 
     def _on_task_restart(self, item):
         self.set_task_active(True)
-        self.database.restart_task(self.selected_task_uuid)
+        self.database.restart_task(self.selected_task_id)
 
     def set_task_active(self, active, status=None):
         for row in self.model:
-            if row[0] == self.selected_task_uuid:
+            if row[0] == self.selected_task_id:
                 row[6] = active
                 if status is not None:
                     row[1] = status
@@ -97,7 +97,7 @@ class Search(gtk.Window):
             fill=True, padding=4)
 
         self.model = model = gtk.ListStore(
-            str,   # 0 uuid
+            str,   # 0 id
             str,   # 1 status
             str,   # 2 project
             str,   # 3 clean description
@@ -194,10 +194,10 @@ class Search(gtk.Window):
 
     def cell_data(self, col, cell, model, iter, data=None):
         status = model[iter][1]
-        if status == "pending":
-            cell.set_property("foreground", "black")
-        else:
+        if status in ("completed", "deleted"):
             cell.set_property("foreground", "gray")
+        else:
+            cell.set_property("foreground", "black")
 
         running = model[iter][6]
         if running:
@@ -211,8 +211,8 @@ class Search(gtk.Window):
         list, to show when the corresponding checkbox is checked.
         """
         tasks = self.database.get_tasks()
-        self.tasks = [t for t in tasks if t["status"] == "pending"]
-        self.all_tasks = [t for t in tasks if t["status"] != "deleted"]
+        self.tasks = [t for t in tasks if not t.is_closed()]
+        self.all_tasks = [t for t in tasks if not t.is_deleted()]
         self.refresh_table()
 
     def refresh_table(self):
@@ -223,14 +223,14 @@ class Search(gtk.Window):
 
         self.model.clear()
         for task in sorted(tasks, key=self.task_sort_func):
-            row = [task["uuid"],
+            row = [task.id(),
                   task["status"],
-                  task["project"],
-                  util.strip_description(task["description"]),
+                  task.get_project(),
+                  util.strip_description(task.get_summary()),
                   "%.1f" % float(task["urgency"]),
                   task.get("priority", "L"),
-                  not not task.get("start"),
-                  task["description"]]
+                  task.is_started(),
+                  task.get_summary()]
             self.model.append(row)
 
         title = "Search for tasks (%u)" % len(tasks)
@@ -241,7 +241,7 @@ class Search(gtk.Window):
         active = -task.is_active()
 
         # completed tasks are always last
-        completed = task["status"] != "pending"
+        completed = task.is_closed()
 
         return (active, completed, -float(task["urgency"]))
 
@@ -266,19 +266,19 @@ class Search(gtk.Window):
     def _on_row_activated(self, view, row, column):
         """Open a task editor dialog."""
         model = view.get_model()
-        uuid = model[row][0]
-        self.on_activate_task(uuid)
+        task_id = model[row][0]
+        self.on_activate_task(task_id)
 
     def _on_row_changed(self, view):
         selection = view.get_selection()
         selection.set_mode(gtk.SELECTION_SINGLE)
         tree_model, tree_iter = selection.get_selected()
-        self.selected_task_uuid = tree_model.get_value(tree_iter, 0)
-        util.log("Selected task {0}", self.selected_task_uuid)
+        self.selected_task_id = tree_model.get_value(tree_iter, 0)
+        util.log("Selected task {0}", self.selected_task_id)
 
         self.selected_task = None
         for task in self.all_tasks:
-            if task["uuid"] == self.selected_task_uuid:
+            if str(task.id()) == self.selected_task_id:
                 self.selected_task = task
                 if task.is_active():
                     self.pmenu_start.hide()
@@ -287,14 +287,14 @@ class Search(gtk.Window):
                     self.pmenu_start.show()
                     self.pmenu_stop.hide()
 
-                if task["status"] == "pending":
-                    self.pmenu_done.show()
-                    self.pmenu_restart.hide()
-                else:
+                if task.is_closed():
                     self.pmenu_done.hide()
                     self.pmenu_restart.show()
+                else:
+                    self.pmenu_done.show()
+                    self.pmenu_restart.hide()
 
-                if "://" in task["description"]:
+                if "://" in task.get_summary():
                     self.pmenu_links.show()
                 else:
                     self.pmenu_links.hide()
@@ -525,7 +525,7 @@ class Properties(gtk.Window):
         """Updates the start/stop button label according to the current task
         activity status.  If the task is running, then the label is "Stop" and
         the running time is displayed."""
-        if not self.task or not self.task.get("uuid"):
+        if not self.task or not self.task.id():
             label = "Add"
         elif self.task and "start" in self.task:
             dur = self.task.format_current_runtime()
@@ -544,13 +544,13 @@ class Properties(gtk.Window):
         dlg.set_start_stop_label()
 
     def show_existing_task(self, task):
-        util.log("Showing task {0} ...", task["uuid"])
+        util.log("Showing task {0} ...", task.id())
 
-        self.uuid.set_text(task["uuid"])
-        self.description.set_text(task["description"])
+        self.uuid.set_text(str(task.id()))
+        self.description.set_text(task.get_summary())
         self.project.set_text(task["project"])
-        self.priority.set_text(task["priority"])
-        self.notes.set_text(task.get_note())
+        self.priority.set_text(str(task["priority"]))
+        self.notes.set_text(task.get_description() or "")
 
         self.completed.set_active(task["status"] == "completed")
 
@@ -560,7 +560,7 @@ class Properties(gtk.Window):
             self.start.set_label("Start")
 
     def _on_browse(self, widget):
-        for word in self.task["description"].split(" "):
+        for word in self.task.get_summary().split(" "):
             if "://" in word:
                 webbrowser.open(word)
 
@@ -576,16 +576,6 @@ class Properties(gtk.Window):
             self.database.finish_task(self.task.id())
 
         self.destroy()
-
-    def update_task(self, updates):
-        """
-        Updates the task when the task info window is closed.
-        Updates is a dictionary with 'uuid' and modified fields.
-        """
-        if updates.get("uuid"):
-            self.database.update_task(updates["uuid"], updates)
-        else:
-            self.database.add_task(updates)
 
     def on_delete_event(self, widget, event, data=None):
         self.on_close(widget)

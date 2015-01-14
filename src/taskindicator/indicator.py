@@ -116,11 +116,11 @@ class BaseIndicator(object):
         visibility.
         """
         for idx, item in enumerate(self.task_items):
-            if idx > len(tasks):
+            if idx >= len(tasks):
                 item.hide()
             else:
                 task = tasks[idx]
-                desc = util.strip_description(task["description"])
+                desc = util.strip_description(task.get_summary())
 
                 if task.is_active():
                     label = item.get_children()[0]
@@ -321,7 +321,7 @@ class Checker(object):
         def timer():
             for task in self.database.get_tasks():
                 if "start" in task:
-                    util.run_command(["task", task["uuid"], "stop"])
+                    self.database.stop_task(task.id())
 
         gtk.idle_add(timer)
 
