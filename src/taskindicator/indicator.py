@@ -31,7 +31,6 @@ except ImportError:
 
 from taskindicator import database
 from taskindicator import dialogs
-from taskindicator import taskw
 from taskindicator import util
 from taskindicator.pull import ProcessRunner
 

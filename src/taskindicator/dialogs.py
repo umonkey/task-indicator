@@ -8,7 +8,6 @@ import webbrowser
 
 from taskindicator import util
 from taskindicator.controls import *
-from taskindicator.taskw import Task
 
 
 class Search(gtk.Window):
@@ -432,11 +431,6 @@ class Properties(gtk.Window):
     @classmethod
     def show_task(cls, database, task):
         """Opens the task editor dialog (new if no uuid)."""
-        if isinstance(task, dict):
-            task = Task(task)
-        elif not isinstance(task, dict):
-            raise ValueError("task must be a dict or a taskw.Task")
-
         dlg = cls(database)
         dlg.task = task
 
