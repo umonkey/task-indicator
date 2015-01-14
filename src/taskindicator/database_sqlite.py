@@ -180,15 +180,23 @@ class Database(object):
         util.log("Changing status of task {0} to {1}.", task_id, status)
 
         cur = self.conn.cursor()
-
         ts = int(time.time())
+
+        cur.execute("SELECT id, ts, status FROM changes WHERE task_id = ? ORDER BY id DESC LIMIT 1", (task_id, ))
+        last = cur.fetchone()
+        if last is not None:
+            if status == last[2]:
+                return  # no changes
+            duration = ts - int(last[1])
+            cur.execute("UPDATE changes SET duration = ? WHERE id = ?", (duration, last[0]))
+
         cur.execute("UPDATE tasks SET modified = ?, status = ? WHERE id = ?", (ts, status, task_id))
         cur.execute("INSERT INTO changes (task_id, ts, status) VALUES (?, ?, ?)", (task_id, ts, status))
         self.conn.commit()
 
     def get_started_ts(self, task_id):
         cur = self.conn.cursor()
-        cur.execute("SELECT ts FROM changes WHERE status = 'started' AND task_id = ? ORDER BY id DESC LIMIT 1", (task_id, ))
+        cur.execute("SELECT ts, status FROM changes WHERE task_id = ? ORDER BY id DESC LIMIT 1", (task_id, ))
         row = cur.fetchone()
-        if row:
-            return row[0]
+        if row and row[1] == "started":
+            return int(row[0])
