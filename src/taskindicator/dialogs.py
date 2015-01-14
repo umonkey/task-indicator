@@ -273,31 +273,37 @@ class Search(gtk.Window):
         selection = view.get_selection()
         selection.set_mode(gtk.SELECTION_SINGLE)
         tree_model, tree_iter = selection.get_selected()
-        self.selected_task_id = tree_model.get_value(tree_iter, 0)
-        util.log("Selected task {0}", self.selected_task_id)
 
-        self.selected_task = None
-        for task in self.all_tasks:
-            if str(task.id()) == self.selected_task_id:
-                self.selected_task = task
-                if task.is_active():
-                    self.pmenu_start.hide()
-                    self.pmenu_stop.show()
-                else:
-                    self.pmenu_start.show()
-                    self.pmenu_stop.hide()
+        if not tree_iter:
+            self.selected_task_id = None
+            self.selected_task = None
 
-                if task.is_closed():
-                    self.pmenu_done.hide()
-                    self.pmenu_restart.show()
-                else:
-                    self.pmenu_done.show()
-                    self.pmenu_restart.hide()
+        else:
+            self.selected_task_id = tree_model.get_value(tree_iter, 0)
+            util.log("Selected task {0}", self.selected_task_id)
 
-                if "://" in task.get_summary():
-                    self.pmenu_links.show()
-                else:
-                    self.pmenu_links.hide()
+            self.selected_task = None
+            for task in self.all_tasks:
+                if str(task.id()) == self.selected_task_id:
+                    self.selected_task = task
+                    if task.is_active():
+                        self.pmenu_start.hide()
+                        self.pmenu_stop.show()
+                    else:
+                        self.pmenu_start.show()
+                        self.pmenu_stop.hide()
+
+                    if task.is_closed():
+                        self.pmenu_done.hide()
+                        self.pmenu_restart.show()
+                    else:
+                        self.pmenu_done.show()
+                        self.pmenu_restart.hide()
+
+                    if "://" in task.get_summary():
+                        self.pmenu_links.show()
+                    else:
+                        self.pmenu_links.hide()
 
     def _on_query_changed(self, ctl):
         """Handles the query change.  Stores the new query in self.query for
@@ -384,8 +390,8 @@ class New(TaskDialog):
         add_control(self.description, "Summary:")
 
         row += 1
-        self.project = Project()
-        self.project.refresh(self.database.get_projects())
+        self.project = gtk.Entry()  # Project()
+        #self.project.refresh(self.database.get_projects())
         add_control(self.project, "Project:")
 
         row += 1
@@ -472,8 +478,8 @@ class Properties(gtk.Window):
         add_control(self.description, "Summary:")
 
         row += 1
-        self.project = Project()
-        self.project.refresh(self.database.get_projects())
+        self.project = gtk.Entry()  # Project()
+        #self.project.refresh(self.database.get_projects())
         add_control(self.project, "Project:")
 
         row += 1
@@ -548,7 +554,7 @@ class Properties(gtk.Window):
 
         self.uuid.set_text(str(task.id()))
         self.description.set_text(task.get_summary())
-        self.project.set_text(task["project"])
+        self.project.set_text(task["project"] or "")
         self.priority.set_text(str(task["priority"]))
         self.notes.set_text(task.get_description() or "")
 
