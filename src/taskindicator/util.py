@@ -19,11 +19,11 @@ def log(msg, *args):
     print(msg, file=sys.stderr)
 
 
-def run_command(command):
+def run_command(command, fail=True):
     log("> {0}", " ".join(command))
     p = subprocess.Popen(command, stdout=subprocess.PIPE)
     out = p.communicate()[0]
-    if p.returncode:
+    if p.returncode and fail:
         raise RuntimeError("Command failed with code %s." % p.returncode)
     return out
 

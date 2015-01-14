@@ -243,11 +243,11 @@ class Database(object):
 
     def stop_task(self, task_id):
         util.log("Stopping task {0}.", task_id)
-        util.run_command(["task", task_id, "stop"])
+        util.run_command(["task", task_id, "stop"], fail=False)
 
     def finish_task(self, task_id):
         util.log("Finishing task {0}.", task_id)
-        util.run_command(["task", task_id, "stop"])
+        util.run_command(["task", task_id, "stop"], fail=False)
         util.run_command(["task", task_id, "done"])
 
     def restart_task(self, task_id):
@@ -279,20 +279,14 @@ class Database(object):
         command = ["task", "add"]
 
         for k, v in properties.items():
-            if k == "uuid":
-                continue
-            if k == "tags":
-                for tag in v:
-                    if tag.strip():
-                        command.append(tag)
-            elif k == "description":
+            if k == "summary":
                 command.append(v)
-            else:
-                command.append("{0}:{1}".format(k, v))
+            elif k in ("project", "priority"):
+                command.append("%s:%s" % (k, v))
 
-            output = util.run_command(command)
+        output = util.run_command(command)
 
-            for _taskno in re.findall("Created task (\d+)", output):
-                uuid = util.run_command(["task", _taskno, "uuid"]).strip()
-                util.log("New task uuid: {0}", uuid)
-                return uuid
+        for _taskno in re.findall("Created task (\d+)", output):
+            uuid = util.run_command(["task", _taskno, "uuid"]).strip()
+            util.log("New task uuid: {0}", uuid)
+            return uuid

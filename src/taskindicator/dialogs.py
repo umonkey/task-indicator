@@ -310,19 +310,130 @@ class Search(gtk.Window):
     def on_activate_task(self, uuid):
         if uuid is None:
             util.log("Activate new task dialog")
-            task = Task()
+            New.show_task(self.database)
         else:
             util.log("Activate task {0}", uuid)
             task = self.database.get_task_info(uuid)
+            Properties.show_task(self.database, task)
 
-        Properties.show_task(self.database, task)
+
+class TaskDialog(gtk.Window):
+    def __init__(self):
+        super(TaskDialog, self).__init__()
+        self.connect("key-press-event", self.on_keypress)
+
+    def show_all(self):
+        super(TaskDialog, self).show_all()
+
+        def present():
+            self.present()
+            self.window.focus()
+            self.grab_focus()
+            self.description.grab_focus()
+
+        gtk.idle_add(present)
+
+    def on_keypress(self, widget, event):
+        if event.keyval == gtk.keysyms.Escape:
+            self.destroy()
+        if event.keyval == gtk.keysyms.Return:
+            if not self.notes.has_focus():
+                self.on_close(widget)
+
+
+class New(TaskDialog):
+    def __init__(self, database):
+        super(New, self).__init__()
+        self.connect("key-press-event", self.on_keypress)
+
+        self.database = database
+
+        self.set_border_width(10)
+
+        self.grid = gtk.Table(6, 2)
+        self.add(self.grid)
+
+        def add_label(text):
+            l = gtk.Label(text)
+            l.set_alignment(0, 0.5)
+            self.grid.attach(l, 0, 1, row, row + 1,
+                xoptions=gtk.FILL, yoptions=gtk.FILL, xpadding=2, ypadding=2)
+
+        def add_control(ctl, label, vexpand=False):
+            yoptions = gtk.FILL
+            if vexpand:
+                yoptions |= gtk.EXPAND
+
+            self.grid.attach(ctl, 1, 2, row, row + 1,
+                yoptions=yoptions, xpadding=2, ypadding=2)
+            add_label(label)
+
+        row = 0
+        self.description = gtk.Entry()
+        add_control(self.description, "Summary:")
+
+        row += 1
+        self.project = Project()
+        self.project.refresh(self.database.get_projects())
+        add_control(self.project, "Project:")
+
+        row += 1
+        self.priority = Priority()
+        add_control(self.priority, "Priority:")
+
+        """
+        row += 1
+        self.tags = Tags()
+        add_control(self.tags, "Tags:")
+        """
+
+        row += 1
+        self.notes = NoteEditor()
+        add_control(self.notes, "Description:", vexpand=True)
+
+        row += 1
+        self.bbx = gtk.HButtonBox()
+        self.grid.attach(self.bbx, 0, 2, row, row + 1,
+            yoptions=gtk.FILL, xpadding=2, ypadding=2)
+
+        self.start = gtk.Button("Save")
+        self.start.connect("clicked", self.on_save)
+        self.bbx.add(self.start)
+
+        self.close = gtk.Button("Cancel")
+        self.close.connect("clicked", self.on_close)
+        self.bbx.add(self.close)
+
+        self.set_title("Adding new task")
+        self.set_position(gtk.WIN_POS_CENTER)
+        self.set_default_size(600, 400)
+
+        self.set_icon_name("taskui")
+
+    @classmethod
+    def show_task(cls, database):
+        """Opens the task editor dialog (new if no uuid)."""
+        dlg = cls(database)
+        dlg.show_all()
+
+    def on_close(self, widget):
+        self.destroy()
+
+    def on_save(self, widget):
+        self.database.add_task({
+            "summary": self.description.get_text(),
+            #"description": self.notes.get_text(),  # FIXME: see database.add_task
+            "project": self.project.get_text(),
+            "priority": self.priority.get_text(),
+            #"tags": self.tags.get_tags(),
+        })
+        self.destroy()
 
 
 class Properties(gtk.Window):
     def __init__(self, database, debug=False):
         super(Properties, self).__init__()
-        self.connect("delete_event", self.on_delete_event)
-        self.connect("key-press-event", self._on_keypress)
+        #self.connect("delete_event", self.on_delete_event)
 
         self.database = database
         self.debug = debug
@@ -559,13 +670,6 @@ class Properties(gtk.Window):
     def on_delete_event(self, widget, event, data=None):
         self.on_close(widget)
         return True
-
-    def _on_keypress(self, widget, event):
-        if event.keyval == gtk.keysyms.Escape:
-            self.hide()
-        if event.keyval == gtk.keysyms.Return:
-            if not self.notes.has_focus():
-                self.on_close(widget)
 
     def on_start_stop(self, widget):
         if not self.task.get("uuid"):

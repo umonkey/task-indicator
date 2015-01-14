@@ -287,11 +287,7 @@ class Checker(object):
         self.indicator.set_tasks(tasks)
 
     def on_add_task(self):
-        dialogs.Properties.show_task(self.database,
-                                     {"uuid": None,
-                                      "status": "pending",
-                                      "description": "",
-                                      "priority": "M"})
+        dialogs.New.show_task(self.database)
 
     def on_pull(self):
         ProcessRunner.run(["task-pull"])
