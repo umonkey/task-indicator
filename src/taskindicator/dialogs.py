@@ -361,6 +361,7 @@ class Properties(gtk.Window):
 
         row += 1
         self.project = Project()
+        self.project.refresh(self.database.get_projects())
         add_control(self.project, "Project:")
 
         row += 1
@@ -487,14 +488,6 @@ class Properties(gtk.Window):
         self.description.grab_focus()
 
         self.start.set_label("Add")
-
-    def refresh(self, tasks):
-        """Builds the list of all used project names and feeds it to the
-        project editor combo box."""
-        projects = {}
-        for task in tasks:
-            projects[task["project"]] = True
-        self.project.refresh(projects.keys())
 
     def _on_browse(self, widget):
         for word in self.task["description"].split(" "):

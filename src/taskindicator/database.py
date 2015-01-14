@@ -34,6 +34,12 @@ class Database(object):
             self._tasks = self.load_tasks()
         return self._tasks
 
+    def get_projects(self):
+        projects = {}
+        for task in self.get_tasks():
+            projects[task["project"]] = True
+        return projects.keys()
+
     def refresh(self):
         self._tasks = None
         return self.get_tasks()
