@@ -63,6 +63,12 @@ class Task(dict):
             return False
         return True
 
+    def get_start_ts(self):
+        return int(self["start"])
+
+    def is_closed(self):
+        return self.get("status") in ("completed", "deleted")
+
     def set_active(self, active):
         if active:
             self["start"] = int(time.time())

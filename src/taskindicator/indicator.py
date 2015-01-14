@@ -253,6 +253,7 @@ class Checker(object):
 
     def __init__(self):
         self.toggle_lock = False
+        self.started_ts = []
 
         self.setup_indicator()
 
@@ -337,21 +338,26 @@ class Checker(object):
             self.database.refresh()
             self.search_dialog.refresh()
             self.menu_add_tasks()
-            self.update_status()
             self.database_ts = int(time.time())
 
-    def update_status(self):
-        """Changes the indicator icon and text label according to running
-        tasks."""
-        tasks = [t for t in self.database.get_tasks()
-            if t["status"] == "pending" and "start" in t]
+            self.started_at = []
+            for task in self.database.get_tasks():
+                if task.is_active() and not task.is_closed():
+                    self.started_at.append(task.get_start_ts())
 
-        if not tasks:
+        self.update_status()
+
+    def update_status(self):
+        """
+        Changes the indicator icon and text label according to running tasks.
+        """
+        if not self.started_at:
             self.indicator.set_idle()
         else:
-            count = len(tasks)
-            duration = self.format_duration(self.get_duration())
-            self.indicator.set_running(count, duration)
+            ts = int(time.time())
+            duration = sum([ts - t for t in self.started_at])
+            self.indicator.set_running(len(self.started_at),
+                                       self.format_duration(duration))
 
     def get_duration(self):
         duration = 0
