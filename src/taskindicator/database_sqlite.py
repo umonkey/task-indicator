@@ -69,7 +69,9 @@ class Task(dict):
         self["status"] = "started" if active else "pending"
 
     def get_start_ts(self):
-        return self.db.get_started_ts(self.id())
+        last = self.db.get_last_change(self.id())
+        if last and last["status"] == "started":
+            return int(last["ts"])
 
     def is_closed(self):
         return self["status"] in ("deleted", "completed")
@@ -182,21 +184,20 @@ class Database(object):
         cur = self.conn.cursor()
         ts = int(time.time())
 
-        cur.execute("SELECT id, ts, status FROM changes WHERE task_id = ? ORDER BY id DESC LIMIT 1", (task_id, ))
-        last = cur.fetchone()
+        last = self.get_last_change(task_id)
         if last is not None:
-            if status == last[2]:
+            if status == last["status"]:
                 return  # no changes
-            duration = ts - int(last[1])
-            cur.execute("UPDATE changes SET duration = ? WHERE id = ?", (duration, last[0]))
+            duration = ts - int(last["ts"])
+            cur.execute("UPDATE changes SET duration = ? WHERE id = ?", (duration, last["id"]))
 
         cur.execute("UPDATE tasks SET modified = ?, status = ? WHERE id = ?", (ts, status, task_id))
         cur.execute("INSERT INTO changes (task_id, ts, status) VALUES (?, ?, ?)", (task_id, ts, status))
         self.conn.commit()
 
-    def get_started_ts(self, task_id):
+    def get_last_change(self, task_id):
         cur = self.conn.cursor()
-        cur.execute("SELECT ts, status FROM changes WHERE task_id = ? ORDER BY id DESC LIMIT 1", (task_id, ))
+        cur.execute("SELECT id, ts, status, duration FROM changes WHERE task_id = ? ORDER BY id DESC LIMIT 1", (task_id, ))
         row = cur.fetchone()
-        if row and row[1] == "started":
-            return int(row[0])
+        if row is not None:
+            return dict(zip(("id", "ts", "status", "duration"), row))
