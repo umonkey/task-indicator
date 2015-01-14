@@ -1,6 +1,9 @@
 VERSION=1.41
 PYTHON=python
 
+run:
+	./task-indicator
+
 test:
 	-pep8 src/taskindicator/*.py
 

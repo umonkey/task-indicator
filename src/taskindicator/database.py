@@ -11,12 +11,10 @@ FREQUENCY = 1
 
 
 class Database(object):
-    def __init__(self, callback=None):
+    def __init__(self):
         self.filename = self.get_filename()
         self.mtime = None
         self._tasks = None
-
-        self.callback = callback
 
     def modified_since(self, ts):
         return os.stat(self.filename).st_mtime > ts

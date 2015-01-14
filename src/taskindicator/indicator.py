@@ -247,9 +247,9 @@ class GtkIndicator(BaseIndicator):
 
 
 class Checker(object):
-    """The indicator applet.  Displays the TaskWarrior icon and current
-    activity time, if any.  The pop-up menu can be used to start or stop
-    running tasks.
+    """
+    The indicator applet.  Displays the TaskWarrior icon and current activity
+    time, if any.  The pop-up menu can be used to start or stop running tasks.
     """
 
     def __init__(self):
@@ -257,7 +257,7 @@ class Checker(object):
 
         self.setup_indicator()
 
-        self.database = database.Database(callback=self.on_tasks_changed)
+        self.database = database.Database()
         self.database_ts = 0
 
         self.search_dialog = dialogs.Search(self.database)
@@ -333,18 +333,15 @@ class Checker(object):
         """Ends the applet"""
         sys.exit(0)
 
-    def on_tasks_changed(self, tasks):
-        util.log("on_tasks_changed")
-        self.menu_add_tasks()
-        self.search_dialog.refresh(self.database.get_tasks())
-
     def on_timer(self):
         """Timer handler which updates the list of tasks and the status."""
         gtk.timeout_add(FREQUENCY * 1000, self.on_timer)
 
         if self.database.modified_since(self.database_ts):
+            util.log("Task database changed.")
             self.database.refresh()
             self.search_dialog.refresh()
+            self.menu_add_tasks()
             self.update_status()
             self.database_ts = int(time.time())
 
