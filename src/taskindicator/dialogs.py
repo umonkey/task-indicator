@@ -421,6 +421,14 @@ class New(TaskDialog):
 
         self.set_icon_name("taskui")
 
+    def on_keypress(self, widget, event):
+        if event.keyval == gtk.keysyms.Escape:
+            self.destroy()
+        if event.keyval == gtk.keysyms.Return:
+            if not self.notes.has_focus():
+                self.on_save(widget)
+                self.destroy()
+
     @classmethod
     def show_task(cls, database):
         """Opens the task editor dialog (new if no uuid)."""
