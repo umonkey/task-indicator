@@ -122,7 +122,6 @@ class Search(gtk.Window):
             view.append_column(col)
 
         add_column("Project", lcell, 2)
-        add_column("Urg", rcell, 4)
         add_column("Pri", mcell, 5)
         add_column("Description", lcell, 3)
 
