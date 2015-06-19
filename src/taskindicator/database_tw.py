@@ -73,6 +73,7 @@ class Task(dict):
         if not self.get("start"):
             return False
         return True
+    is_started = is_active
 
     def set_active(self, active):
         if active:
@@ -106,6 +107,9 @@ class Task(dict):
     def is_deleted(self):
         return self["status"] == "deleted"
 
+    def get_project(self):
+        return self.get("project", None)
+
 
 class Tasks(object):
     def __init__(self):
@@ -113,10 +117,10 @@ class Tasks(object):
 
         database_folder = get_database_folder()
 
-        db = os.path.join(database_folder, "pending.data")
+        db = os.path.expanduser(os.path.join(database_folder, "pending.data"))
         self.tasks += self.load_data(db)
 
-        db = os.path.join(database_folder, "completed.data")
+        db = os.path.expanduser(os.path.join(database_folder, "completed.data"))
         self.tasks += self.load_data(db)
 
     def load_data(self, database):
@@ -210,7 +214,8 @@ class Database(object):
         for line in util.run_command(["task", "_show"]).split("\n"):
             if line.startswith("data.location="):
                 folder = line.split("=", 1)[1].strip()
-                return os.path.join(folder, "pending.data")
+                return os.path.expanduser(os.path.join(folder,
+                    "pending.data"))
         raise RuntimeError("Could not find task database location.")
 
     def get_tasks(self):
